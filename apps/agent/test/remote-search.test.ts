@@ -1,4 +1,4 @@
-import type { RemoteScope } from "@talorys/shared";
+import type { RemoteScope } from "@emo/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { bearer, inAgent, loggedIn, type Client } from "./helpers";
 import { invalidateSemanticCache } from "../src/semantic";

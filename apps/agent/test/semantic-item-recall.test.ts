@@ -10,10 +10,10 @@ import { type SemanticContext, queryVector, selectSemanticMemories } from "../sr
 import { itemUsageToday, runItemPass } from "../src/semantic/itemIndex";
 import { formatLocal } from "../src/services/time";
 import { UsageService } from "../src/services/usage";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 /** Clears items and semantic state and returns an enabled context searched with the fixture embedder. */
-function setup(a: TalorysAgent) {
+function setup(a: EmoAgent) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);
@@ -26,7 +26,7 @@ function setup(a: TalorysAgent) {
   return { s, sem, embedder };
 }
 
-const reminder = (a: TalorysAgent, name: string) =>
+const reminder = (a: EmoAgent, name: string) =>
   a.services.automationsRepo.create({ name, kind: "reminder", message: name, schedule: { type: "daily", time: "08:00" }, enabled: true });
 
 describe("per-turn item recall", () => {

@@ -11,26 +11,26 @@ export interface TemplateInfo {
 }
 
 export function templatesDir(): string {
-  if (process.env.TALORYS_TEMPLATES_DIR) return process.env.TALORYS_TEMPLATES_DIR;
+  if (process.env.EMO_TEMPLATES_DIR) return process.env.EMO_TEMPLATES_DIR;
   return join(dirname(fileURLToPath(import.meta.url)), "..", "templates");
 }
 
 export function readTemplateInfo(dir = templatesDir()): TemplateInfo {
   const path = join(dir, "version.json");
   if (!existsSync(path)) {
-    throw new CliError("This copy of create-talorys is missing its deployment templates.", "Reinstall with `npx create-talorys@latest`.");
+    throw new CliError("This copy of create-emo is missing its deployment templates.", "Reinstall with `npx create-emo@latest`.");
   }
   return JSON.parse(readFileSync(path, "utf8")) as TemplateInfo;
 }
 
-/** A directory is safe to install into when it doesn't exist, is empty, or already holds a Talorys manifest. */
+/** A directory is safe to install into when it doesn't exist, is empty, or already holds a EMO manifest. */
 export function assertSafeTarget(dir: string): "new" | "existing" {
   if (!existsSync(dir)) return "new";
   if (existsSync(join(dir, MANIFEST_FILE))) return "existing";
   const entries = readdirSync(dir).filter((e) => e !== ".DS_Store");
   if (entries.length === 0) return "new";
   throw new CliError(
-    `${dir} already exists and is not a Talorys installation.`,
+    `${dir} already exists and is not a EMO installation.`,
     "Choose another directory with `--dir <path>` so nothing unrelated is overwritten.",
   );
 }
@@ -84,11 +84,11 @@ export function scaffoldProject(input: ScaffoldInput, templates = templatesDir()
 }
 
 function projectReadme(input: ScaffoldInput): string {
-  return `# Your Talorys deployment
+  return `# Your EMO deployment
 
-This directory was created by \`create-talorys\` and identifies your deployment
+This directory was created by \`create-emo\` and identifies your deployment
 (\`${input.installationId}\`). Keep it — it contains no secrets, but the
-installer uses \`talorys.json\` to find your Cloudflare resources.
+installer uses \`emo.json\` to find your Cloudflare resources.
 
 | Resource | Name |
 | --- | --- |
@@ -97,10 +97,10 @@ installer uses \`talorys.json\` to find your Cloudflare resources.
 
 Commands (run inside this directory):
 
-- \`npx create-talorys@latest update\` — update to the latest version (keeps all data)
-- \`npx create-talorys@latest status\` — show deployment status
-- \`npx create-talorys@latest doctor\` — diagnose problems
-- \`npx create-talorys@latest reset-password\` — set a new owner password
+- \`npx create-emo@latest update\` — update to the latest version (keeps all data)
+- \`npx create-emo@latest status\` — show deployment status
+- \`npx create-emo@latest doctor\` — diagnose problems
+- \`npx create-emo@latest reset-password\` — set a new owner password
 
 Your data lives in a Durable Object inside your Cloudflare account, not in this folder.
 Use Settings → Privacy → Export in the app to download a backup.

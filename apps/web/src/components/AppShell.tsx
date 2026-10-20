@@ -7,35 +7,37 @@ import { useKeyboardOpenFlag } from "../hooks/keyboard";
 import { useSession } from "../hooks/session";
 import { useNotifications, useSettings } from "../hooks/queries";
 import { cn } from "../lib/utils";
+import { useI18n } from "../lib/i18n";
 
 const NAV = [
-  { to: "/chat", label: "Chat", icon: MessageSquare },
-  { to: "/memory", label: "Memory", icon: Brain },
-  { to: "/tasks", label: "Tasks", icon: CheckSquare },
-  { to: "/notes", label: "Notes", icon: NotebookPen },
-  { to: "/automations", label: "Automations", icon: CalendarClock },
+  { to: "/chat", label: "nav.chat", short: "nav.chat", icon: MessageSquare },
+  { to: "/memory", label: "nav.memory", short: "nav.memory", icon: Brain },
+  { to: "/tasks", label: "nav.tasks", short: "nav.tasks", icon: CheckSquare },
+  { to: "/notes", label: "nav.notes", short: "nav.notes", icon: NotebookPen },
+  { to: "/automations", label: "nav.automations", short: "nav.schedules", icon: CalendarClock },
 ] as const;
 
 export function AppShell() {
   const { logout } = useSession();
+  const { t } = useI18n();
   const settings = useSettings();
   const notifications = useNotifications();
   const [notifOpen, setNotifOpen] = useState(false);
   useKeyboardOpenFlag();
   const location = useLocation();
   const unread = notifications.data?.unread ?? 0;
-  const agentName = settings.data?.agentName ?? "Talorys";
+  const agentName = settings.data?.agentName ?? "EMO";
   const isChat = location.pathname.startsWith("/chat");
 
   const bell = (
     <button type="button"
       onClick={() => setNotifOpen(true)}
       className="relative rounded-lg p-2 text-fg-muted transition-colors hover:bg-muted hover:text-fg"
-      aria-label={`Notifications${unread ? ` (${unread} unread)` : ""}`}
+      aria-label={unread ? `${t("nav.notifications")} (${t("nav.unread", { count: unread })})` : t("nav.notifications")}
     >
       <Bell className="h-[18px] w-[18px]" />
       {unread > 0 && (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-fg">
+        <span className="absolute end-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-fg">
           {unread > 9 ? "9+" : unread}
         </span>
       )}
@@ -45,18 +47,19 @@ export function AppShell() {
   return (
     <div className="flex h-full">
       {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-subtle md:flex">
+      <aside className="hidden w-60 shrink-0 flex-col border-e border-border bg-subtle md:flex">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex min-w-0 items-center gap-2.5">
-            <Logo />
-            <span className="truncate text-[15px] font-semibold tracking-tight">{agentName}</span>
+            <Logo className="h-5 w-auto" />
+            <span className="sr-only">{agentName}</span>
           </div>
           {bell}
         </div>
-        <nav className="flex-1 space-y-0.5 px-3 py-2" aria-label="Main">
+        <nav className="flex-1 space-y-0.5 px-3 py-2" aria-label={t("nav.main")}>
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
+              aria-label={t(label)}
               to={to}
               className={({ isActive }) =>
                 cn(
@@ -66,7 +69,7 @@ export function AppShell() {
               }
             >
               <Icon className="h-4 w-4" />
-              {label}
+              {t(label)}
             </NavLink>
           ))}
         </nav>
@@ -81,14 +84,14 @@ export function AppShell() {
             }
           >
             <Settings className="h-4 w-4" />
-            Settings
+            {t("nav.settings")}
           </NavLink>
           <button type="button"
             onClick={() => void logout()}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-muted hover:text-fg"
           >
             <LogOut className="h-4 w-4" />
-            Lock
+            {t("nav.lock")}
           </button>
         </div>
       </aside>
@@ -97,12 +100,12 @@ export function AppShell() {
         {/* Mobile top bar */}
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface/80 px-4 backdrop-blur md:hidden">
           <div className="flex items-center gap-2">
-            <Logo className="h-6 w-6" />
-            <span className="font-semibold tracking-tight">{agentName}</span>
+            <Logo className="h-5 w-auto" />
+            <span className="sr-only">{agentName}</span>
           </div>
           <div className="flex items-center">
             {bell}
-            <NavLink to="/settings" className="rounded-lg p-2 text-fg-muted hover:bg-muted" aria-label="Settings">
+            <NavLink to="/settings" className="rounded-lg p-2 text-fg-muted hover:bg-muted" aria-label={t("nav.settings")}>
               <Settings className="h-[18px] w-[18px]" />
             </NavLink>
           </div>
@@ -114,19 +117,20 @@ export function AppShell() {
 
         {/* Mobile bottom navigation */}
         <nav
-          aria-label="Main"
+          aria-label={t("nav.main")}
           className="mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         >
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {NAV.map(({ to, label, short, icon: Icon }) => (
             <NavLink
               key={to}
+              aria-label={t(label)}
               to={to}
               className={({ isActive }) =>
                 cn("flex flex-col items-center gap-1 py-2 text-[11px] font-medium", isActive ? "text-accent" : "text-fg-subtle")
               }
             >
               <Icon className="h-5 w-5" />
-              {label === "Automations" ? "Schedules" : label}
+              {t(short)}
             </NavLink>
           ))}
         </nav>

@@ -10,7 +10,7 @@ import { dropSemanticData, ensureSemanticSchema } from "../src/semantic/migratio
 import type { SemanticContext } from "../src/semantic/recall";
 import { UsageService } from "../src/services/usage";
 import type { Services } from "../src/services/container";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 const QUESTION = "any tasks about botany?";
 
@@ -26,7 +26,7 @@ function reset(s: Services) {
  * Seeds and indexes the botany items under the fixture defaults, then clears today's usage and
  * returns a fresh turn context with the given caps and a spy on its embedder.
  */
-async function setup(a: TalorysAgent, caps: Pick<SemanticConfig, "maxEmbeddingsPerDay" | "maxItemEmbeddingsPerDay">) {
+async function setup(a: EmoAgent, caps: Pick<SemanticConfig, "maxEmbeddingsPerDay" | "maxItemEmbeddingsPerDay">) {
   const s = a.services;
   reset(s);
   ensureSemanticSchema(s.db);

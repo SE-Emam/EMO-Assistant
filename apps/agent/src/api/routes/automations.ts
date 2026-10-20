@@ -1,4 +1,4 @@
-import { automationCreateSchema, automationUpdateSchema } from "@talorys/shared";
+import { automationCreateSchema, automationUpdateSchema } from "@emo/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Context } from "hono";

@@ -1,6 +1,6 @@
 import type { SettingsService } from "./settings";
 
-export const LATEST_URL = "https://registry.npmjs.org/create-talorys/latest";
+export const LATEST_URL = "https://registry.npmjs.org/create-emo/latest";
 const CACHE_KEY = "update.latest";
 const TTL_MS = 24 * 60 * 60 * 1000;
 /** Retry a failed lookup sooner than a successful one, but not on every page load. */

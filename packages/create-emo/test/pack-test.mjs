@@ -1,7 +1,7 @@
 // Verifies the distributable CLI works outside the monorepo:
-//  1. npm pack create-talorys
+//  1. npm pack create-emo
 //  2. install the tarball into an empty temp project
-//  3. run the installed `create-talorys` binary (--help, --version, full non-interactive install)
+//  3. run the installed `create-emo` binary (--help, --version, full non-interactive install)
 // Cloudflare is simulated by test/fake-wrangler.mjs; the deployed site by a local HTTP stub.
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 
 const pkgDir = join(dirname(fileURLToPath(import.meta.url)), "..");
-const work = mkdtempSync(join(tmpdir(), "talorys-pack-"));
+const work = mkdtempSync(join(tmpdir(), "emo-pack-"));
 // Windows refuses to spawn npm.cmd without a shell (Node's CVE-2024-27980 fix): run npm's JS entry with node instead.
 const npm = (args, opts) =>
   process.env.npm_execpath
@@ -40,14 +40,14 @@ try {
   mkdirSync(project, { recursive: true });
   writeFileSync(join(project, "package.json"), JSON.stringify({ name: "consumer", private: true }));
   npm(["install", "--no-audit", "--no-fund", "--silent", tarball], { cwd: project, stdio: "inherit" });
-  const shim = join(project, "node_modules/.bin", process.platform === "win32" ? "create-talorys.cmd" : "create-talorys");
+  const shim = join(project, "node_modules/.bin", process.platform === "win32" ? "create-emo.cmd" : "create-emo");
   assert.ok(existsSync(shim), "bin linked");
   // Run the installed CLI through node: Windows .cmd shims cannot be spawned without a shell.
-  const cli = join(project, "node_modules/create-talorys/dist/cli.js");
+  const cli = join(project, "node_modules/create-emo/dist/cli.js");
 
   const help = spawnSync(process.execPath, [cli, "--help"], { encoding: "utf8" });
   assert.equal(help.status, 0);
-  assert.match(help.stdout, /npx create-talorys@latest/);
+  assert.match(help.stdout, /npx create-emo@latest/);
   const version = spawnSync(process.execPath, [cli, "--version"], { encoding: "utf8" });
   assert.equal(version.stdout.trim(), JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8")).version);
 
@@ -62,7 +62,7 @@ try {
       res.writeHead(status, { "content-type": "application/json" });
       res.end(JSON.stringify(body));
     };
-    if (path === "/") return res.end("<!doctype html><title>Talorys</title>");
+    if (path === "/") return res.end("<!doctype html><title>EMO</title>");
     if (path === "/api/auth/session") return json(200, { authenticated: false, configured: true });
     if (path === "/api/tasks") return json(401, { error: { code: "UNAUTHORIZED" } });
     if (path === "/api/health") return json(200, { ok: true, storage: "ok", schema_version: 1, configured: { password: true, session_secret: true } });
@@ -79,10 +79,10 @@ try {
           cwd: work,
           env: {
             ...process.env,
-            TALORYS_WRANGLER_BIN: join(pkgDir, "test/fake-wrangler.mjs"),
+            EMO_WRANGLER_BIN: join(pkgDir, "test/fake-wrangler.mjs"),
             FAKE_CF_STATE: statePath,
-            TALORYS_OWNER_PASSWORD: "packaged-Test-password-1",
-            TALORYS_TEST_VERIFY_ORIGIN: origin,
+            EMO_OWNER_PASSWORD: "packaged-Test-password-1",
+            EMO_TEST_VERIFY_ORIGIN: origin,
             CI: "1",
           },
           stdio: ["ignore", "pipe", "pipe"],
@@ -96,11 +96,11 @@ try {
     });
   const first = await run(["--yes", "--dir", "my-agent"]);
   assert.equal(first.code, 0, first.out);
-  assert.match(first.out, /Talorys is ready/);
+  assert.match(first.out, /EMO is ready/);
   assert.doesNotMatch(first.out, /packaged-Test-password-1/);
-  const manifest = JSON.parse(readFileSync(join(work, "my-agent/talorys.json"), "utf8"));
+  const manifest = JSON.parse(readFileSync(join(work, "my-agent/emo.json"), "utf8"));
   assert.equal(manifest.status, "deployed");
-  assert.match(manifest.public_url, /^https:\/\/talorys-[a-z0-9]{8}-web\.pages\.dev$/);
+  assert.match(manifest.public_url, /^https:\/\/emo-[a-z0-9]{8}-web\.pages\.dev$/);
 
   console.log("• Repeated install is idempotent");
   const second = await run(["--yes", "--dir", "my-agent"]);

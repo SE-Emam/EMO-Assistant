@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const PASSWORD = process.env.TALORYS_DEV_PASSWORD || "talorys-dev-password";
+const PASSWORD = process.env.EMO_DEV_PASSWORD || "emo-dev-password";
 
 async function login(page: Page) {
   await page.goto("/");
@@ -9,10 +9,10 @@ async function login(page: Page) {
   await expect(page.getByText("What would you like to do today?")).toBeVisible();
 }
 
-test.describe("Talorys owner experience", () => {
+test.describe("EMO owner experience", () => {
   test("login rejects a wrong password and has no signup", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Talorys", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "EMO", exact: true })).toBeVisible();
     await expect(page.getByText(/sign ?up|register|create account/i)).toHaveCount(0);
     await page.getByPlaceholder("Owner password").fill("definitely-wrong-1");
     await page.getByRole("button", { name: "Unlock" }).click();
@@ -131,7 +131,7 @@ test.describe("Talorys owner experience", () => {
     await login(page);
     await page.getByRole("link", { name: "Memory" }).first().click();
     await page.getByRole("button", { name: "Add memory" }).click();
-    await page.getByLabel("What should Talorys remember?").fill("Enjoys e2e jazz on Sundays");
+    await page.getByLabel("What should EMO remember?").fill("Enjoys e2e jazz on Sundays");
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByText("Enjoys e2e jazz on Sundays")).toBeVisible();
@@ -147,7 +147,7 @@ test.describe("Talorys owner experience", () => {
     await page.getByRole("link", { name: "Memory" }).first().click();
     const add = async (content: string) => {
       await page.getByRole("button", { name: "Add memory" }).click();
-      await page.getByLabel("What should Talorys remember?").fill(content);
+      await page.getByLabel("What should EMO remember?").fill(content);
       await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
       await expect(page.getByRole("dialog")).toHaveCount(0);
     };

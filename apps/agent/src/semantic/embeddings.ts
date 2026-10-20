@@ -135,12 +135,12 @@ export class MockEmbedder implements Embedder {
 }
 
 /**
- * Chooses the embedder the way `TalorysAgent.aiProvider()` chooses the chat provider:
+ * Chooses the embedder the way `EmoAgent.aiProvider()` chooses the chat provider:
  * the mock in demo mode or explicit local development, Workers AI when bound, else null.
  */
 export function createEmbedder(env: Env, settings: SettingsService, model: string): Embedder | null {
   if (settings.get().demoMode) return new MockEmbedder();
-  if (env.TALORYS_ENV === "development" && env.TALORYS_MOCK_AI === "1") return new MockEmbedder();
+  if (env.EMO_ENV === "development" && env.EMO_MOCK_AI === "1") return new MockEmbedder();
   if (!env.AI) return null;
   return new WorkersAiEmbedder(env.AI, model);
 }

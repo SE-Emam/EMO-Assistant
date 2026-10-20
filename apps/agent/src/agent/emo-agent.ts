@@ -1,12 +1,12 @@
 import { Agent } from "agents";
-import type { Automation } from "@talorys/shared";
+import type { Automation } from "@emo/shared";
 import type { Env } from "../env";
 import { migrate } from "../db/migrations";
 import { createServices, type Services } from "../services/container";
 import type { Scheduler } from "./scheduling";
 import { AgentRunner } from "./runner";
 import { createApi } from "../api/app";
-import { CloudflareWorkersAIProvider } from "../ai/workers-ai";
+import { createConfiguredProvider } from "../ai/configured";
 import { MockAIProvider } from "../ai/mock";
 import type { AIProvider } from "../ai/provider";
 import { localDayBounds, formatLocal } from "../services/time";
@@ -30,7 +30,7 @@ const api = createApi();
  * The owner's personal agent. Exactly one instance exists per deployment
  * ("personal-agent"); it owns all data in its SQLite-backed Durable Object.
  */
-export class TalorysAgent extends Agent<Env, AgentState> {
+export class EmoAgent extends Agent<Env, AgentState> {
   override initialState: AgentState = { unread: 0 };
 
   private _services: Services | null = null;
@@ -56,7 +56,7 @@ export class TalorysAgent extends Agent<Env, AgentState> {
         {
           clef: () => this.clefRun(),
           neighbors: (memory, opts) => semanticNeighbors(this.services, this.env, memory, opts),
-          ...(this.env.TALORYS_ENV === "development" ? { onAiCheck: (check) => console.info("memory.ai_check", JSON.stringify(check)) } : {}),
+          ...(this.env.EMO_ENV === "development" ? { onAiCheck: (check) => console.info("memory.ai_check", JSON.stringify(check)) } : {}),
         },
         (work) => this.ctx.waitUntil(work),
       );
@@ -80,31 +80,36 @@ export class TalorysAgent extends Agent<Env, AgentState> {
   }
 
   /**
-   * Talorys has no sub-agents. Without this, the SDK forwards any `/sub/{class}/{name}/...`
+   * EMO has no sub-agents. Without this, the SDK forwards any `/sub/{class}/{name}/...`
    * request to a fresh facet with its own empty database, bypassing login rate limits.
    */
   override async onBeforeSubAgent(): Promise<Response> {
     return Response.json({ error: { code: "NOT_FOUND", message: "Not found" } }, { status: 404 });
   }
 
-  /** Chooses the AI provider. The mock is only used in local development or explicit demo mode. */
-  aiProvider(): AIProvider | null {
+  /** Chooses the AI provider. The mock is demo mode, or a local-dev default until an external provider is configured. */
+  async aiProvider(): Promise<AIProvider | null> {
     const settings = this.services.settings.get();
     if (settings.demoMode) return new MockAIProvider();
-    if (this.env.TALORYS_ENV === "development" && this.env.TALORYS_MOCK_AI === "1") return new MockAIProvider();
-    if (!this.env.AI) return null;
-    return new CloudflareWorkersAIProvider(this.env.AI, settings.model);
+    const configured = createConfiguredProvider(settings, await this.services.aiKeys.get(), this.env);
+    if (this.env.EMO_ENV === "development" && this.env.EMO_MOCK_AI === "1") {
+      // Keep the offline default for Workers AI, but honor an external provider the owner set up with a key.
+      return settings.aiProvider !== "workers-ai" && configured ? configured : new MockAIProvider();
+    }
+    return configured;
   }
 
-  /** Clef for the memory-history AI check: only with real Workers AI (not mock AI or demo mode). */
+  /** Clef for the memory-history AI check: only with the real Workers AI binding (not mock AI or demo mode). */
   clefRun(): ClefRun | null {
-    if (!this.env.AI || !(this.aiProvider() instanceof CloudflareWorkersAIProvider)) return null;
+    const settings = this.services.settings.get();
+    if (!this.env.AI || settings.demoMode || settings.aiProvider !== "workers-ai") return null;
+    if (this.env.EMO_ENV === "development" && this.env.EMO_MOCK_AI === "1") return null;
     const ai = this.env.AI;
     return (request, signal) => ai.run(CLEF_MODEL, { ...request }, { signal });
   }
 
-  runner(): AgentRunner {
-    return new AgentRunner(this.services, this.aiProvider(), semanticExtensions(this.services, this.env, (work) => this.ctx.waitUntil(work)));
+  async runner(): Promise<AgentRunner> {
+    return new AgentRunner(this.services, await this.aiProvider(), semanticExtensions(this.services, this.env, (work) => this.ctx.waitUntil(work)));
   }
 
   refreshUnread(): void {
@@ -156,7 +161,7 @@ export class TalorysAgent extends Agent<Env, AgentState> {
         if (!s.usage.canRunScheduledAi(settings.limits)) return skipForBudget(s, a);
         let text: string;
         try {
-          text = await this.runner().runScheduledPrompt(a.message);
+          text = await (await this.runner()).runScheduledPrompt(a.message);
         } catch (error) {
           // The budget ran out while this run waited (another run or chat took the last request).
           if (error instanceof AppError && error.code === "AI_LIMIT_REACHED") return skipForBudget(s, a);

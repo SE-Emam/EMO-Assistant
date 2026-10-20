@@ -21,8 +21,8 @@ describe("configuration generation", () => {
   it("derives predictable resource names", () => {
     expect(resourceNames("abcd1234")).toEqual({
       installationId: "abcd1234",
-      workerName: "talorys-abcd1234-agent",
-      pagesProjectName: "talorys-abcd1234-web",
+      workerName: "emo-abcd1234-agent",
+      pagesProjectName: "emo-abcd1234-web",
     });
     expect(() => resourceNames("../x")).toThrow();
   });
@@ -32,10 +32,10 @@ describe("configuration generation", () => {
     expect(cfg.workers_dev).toBe(false);
     expect(cfg.preview_urls).toBe(false);
     expect(cfg.ai).toEqual({ binding: "AI" });
-    expect(cfg.durable_objects.bindings).toEqual([{ name: "TalorysAgent", class_name: "TalorysAgent" }]);
-    expect(cfg.migrations).toEqual([{ tag: "v1", new_sqlite_classes: ["TalorysAgent"] }]);
+    expect(cfg.durable_objects.bindings).toEqual([{ name: "EmoAgent", class_name: "EmoAgent" }]);
+    expect(cfg.migrations).toEqual([{ tag: "v1", new_sqlite_classes: ["EmoAgent"] }]);
     expect(cfg.compatibility_flags).toContain("nodejs_compat");
-    expect(cfg.vars.TALORYS_DEFAULT_TIMEZONE).toBe("Europe/Paris");
+    expect(cfg.vars.EMO_DEFAULT_TIMEZONE).toBe("Europe/Paris");
     expect(JSON.stringify(cfg)).not.toMatch(/SECRET|PASSWORD/);
   });
 
@@ -128,12 +128,12 @@ describe("post-deploy verification", () => {
 describe("semantic recall default", () => {
   const base = { workerName: "w", installationId: "abcd1234", version: "1", timezone: "UTC", agentName: "Ada" };
 
-  it("adds only TALORYS_SEMANTIC_DEFAULT when enabled and leaves upstream vars untouched otherwise", () => {
+  it("adds only EMO_SEMANTIC_DEFAULT when enabled and leaves upstream vars untouched otherwise", () => {
     const upstream = generateAgentConfig(base);
     expect(generateAgentConfig({ ...base, semanticDefault: false })).toEqual(upstream);
     expect(toJsonc(generateAgentConfig({ ...base, semanticDefault: false }))).toBe(toJsonc(upstream));
     const on = generateAgentConfig({ ...base, semanticDefault: true });
-    expect(on.vars).toEqual({ ...(upstream.vars as Record<string, string>), TALORYS_SEMANTIC_DEFAULT: "on" });
+    expect(on.vars).toEqual({ ...(upstream.vars as Record<string, string>), EMO_SEMANTIC_DEFAULT: "on" });
     expect({ ...on, vars: upstream.vars }).toEqual(upstream);
   });
 });

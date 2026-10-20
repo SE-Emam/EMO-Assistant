@@ -1,4 +1,4 @@
-import { type HealthReport, TALORYS_VERSION, type UsageReport, settingsUpdateSchema } from "@talorys/shared";
+import { aiProviderPreset, type HealthReport, EMO_VERSION, type UsageReport, settingsUpdateSchema } from "@emo/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../app";
@@ -30,7 +30,7 @@ systemRoutes.get("/health", (c) => {
   };
   const report: HealthReport = {
     ok: storage === "ok" && s.auth.isConfigured(),
-    version: TALORYS_VERSION,
+    version: EMO_VERSION,
     storage,
     schema_version: version,
     configured,
@@ -41,52 +41,72 @@ systemRoutes.get("/health", (c) => {
   return c.json(report, report.ok ? 200 : 503);
 });
 
-systemRoutes.get("/settings", (c) => c.json({ settings: c.env.agent.services.settings.get() }));
+const settingsPatchSchema = settingsUpdateSchema.extend({
+  /** Write-only: stored encrypted, never returned by GET /settings. Null or "" clears it. */
+  aiApiKey: z.string().trim().max(500).nullable().optional(),
+});
+
+systemRoutes.get("/settings", (c) => {
+  const s = c.env.agent.services;
+  return c.json({ settings: s.settings.get(), aiKeySet: s.aiKeys.configured() });
+});
 
 systemRoutes.patch("/settings", async (c) => {
-  const patch = await body(c, settingsUpdateSchema);
+  const { aiApiKey, ...patch } = await body(c, settingsPatchSchema);
   const s = c.env.agent.services;
   const before = s.settings.get();
   const settings = s.settings.update(patch);
+  if (aiApiKey !== undefined) await s.aiKeys.set(aiApiKey);
   if (settings.timezone !== before.timezone) await s.automations.rearmAll();
   if (settings.demoMode !== before.demoMode) {
     s.activity.record("settings.demo_mode", settings.demoMode ? "Demo mode enabled (mock AI)" : "Demo mode disabled");
   }
-  return c.json({ settings });
+  if (settings.aiProvider !== before.aiProvider) {
+    s.activity.record("settings.ai_provider", `AI provider set to ${settings.aiProvider}`);
+  }
+  return c.json({ settings, aiKeySet: s.aiKeys.configured() });
 });
 
 systemRoutes.get("/usage", (c) => {
   const s = c.env.agent.services;
   const settings = s.settings.get();
+  const workersAi = settings.aiProvider === "workers-ai";
   const report: UsageReport = {
     day: new Date().toISOString().slice(0, 10),
     today: s.usage.today(),
     last_7_days: s.usage.lastDays(7),
     limits: settings.limits,
     model: settings.model,
-    note:
-      "Local estimates for this app before Cloudflare's free allocation, not a bill. Tokens marked est. are ~4 characters per token. Embeddings have their own daily cap.",
-    dashboard_url: "https://dash.cloudflare.com/?to=/:account/ai/workers-ai",
+    note: workersAi
+      ? "Local estimates for this app before Cloudflare's free allocation, not a bill. Tokens marked est. are ~4 characters per token. Embeddings have their own daily cap."
+      : "Local token counts for this app, not a provider bill. Neuron and USD estimates apply only to Workers AI models; other providers stay unpriced. Tokens marked est. are ~4 characters per token.",
+    dashboard_url: workersAi ? "https://dash.cloudflare.com/?to=/:account/ai/workers-ai" : (aiProviderPreset(settings.aiProvider).docsUrl ?? ""),
     pricing: WORKERS_AI_PRICING,
   };
   return c.json(report);
 });
 
-systemRoutes.get("/system", (c) => {
+systemRoutes.get("/system", async (c) => {
   const s = c.env.agent.services;
+  const settings = s.settings.get();
+  const provider = await c.env.agent.aiProvider();
   return c.json({
-    version: TALORYS_VERSION,
-    deployed_version: c.env.env.TALORYS_DEPLOYED_VERSION ?? null,
-    installation_id: c.env.env.TALORYS_INSTALLATION_ID ?? null,
+    version: EMO_VERSION,
+    deployed_version: c.env.env.EMO_DEPLOYED_VERSION ?? null,
+    installation_id: c.env.env.EMO_INSTALLATION_ID ?? null,
     schema_version: schemaVersion(s.db),
     ai_binding: !!c.env.env.AI,
-    ai_provider: c.env.agent.aiProvider()?.id ?? "none",
-    environment: c.env.env.TALORYS_ENV === "development" ? "development" : "production",
+    ai_provider: provider?.id ?? "none",
+    ai_selected_provider: settings.aiProvider,
+    ai_model: settings.model,
+    ai_key_set: s.aiKeys.configured(),
+    ai_ready: !!provider,
+    environment: c.env.env.EMO_ENV === "development" ? "development" : "production",
   });
 });
 
 systemRoutes.get("/system/update", async (c) => {
-  const current = c.env.env.TALORYS_DEPLOYED_VERSION ?? TALORYS_VERSION;
+  const current = c.env.env.EMO_DEPLOYED_VERSION ?? EMO_VERSION;
   return c.json(await checkForUpdate(c.env.agent.services.settings, current));
 });
 
@@ -98,7 +118,7 @@ systemRoutes.get("/export", (c) => {
   return new Response(JSON.stringify(backup, null, 2), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "content-disposition": `attachment; filename="talorys-backup.json"`,
+      "content-disposition": `attachment; filename="emo-backup.json"`,
     },
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeNextRun } from "@talorys/shared";
+import { computeNextRun } from "@emo/shared";
 import { SettingsService } from "../src/services/settings";
 import { inAgent, loggedIn } from "./helpers";
 

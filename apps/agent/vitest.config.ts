@@ -27,9 +27,9 @@ export default defineConfig(async () => ({
       remoteBindings: false,
       miniflare: {
         bindings: {
-          TALORYS_ENV: "development",
-          TALORYS_MOCK_AI: "1",
-          TALORYS_DEV_ORIGINS: "",
+          EMO_ENV: "development",
+          EMO_MOCK_AI: "1",
+          EMO_DEV_ORIGINS: "",
           OWNER_PASSWORD_HASH: await pbkdf2(TEST_PASSWORD),
           SESSION_SECRET: "test-session-secret-0123456789abcdefghijklmnop",
           TEST_PASSWORD,

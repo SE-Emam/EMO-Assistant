@@ -8,7 +8,7 @@ import {
   sha256Hex,
   timingSafeEqual,
   verifyPassword,
-} from "@talorys/shared";
+} from "@emo/shared";
 import type { Database } from "../db/database";
 import type { SettingsService } from "../services/settings";
 import { AppError, ValidationError } from "../api/errors";
@@ -78,7 +78,7 @@ export class AuthService {
     if (!this.isConfigured()) {
       throw new AppError(
         "NOT_CONFIGURED",
-        "Owner credentials are not configured. Run the Talorys installer, or set a strong OWNER_PASSWORD and SESSION_SECRET with `wrangler secret put`.",
+        "Owner credentials are not configured. Run the EMO installer, or set a strong OWNER_PASSWORD and SESSION_SECRET with `wrangler secret put`.",
       );
     }
     return { sessionSecret: this.secrets.sessionSecret! };

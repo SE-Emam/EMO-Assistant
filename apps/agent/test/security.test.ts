@@ -41,13 +41,13 @@ describe("authentication boundary", () => {
   });
 
   it("rejects invalid and forged session cookies", async () => {
-    for (const cookie of ["__Host-talorys_session=forged", "__Host-talorys_session=" + "a".repeat(43), "__Host-talorys_session="]) {
+    for (const cookie of ["__Host-emo_session=forged", "__Host-emo_session=" + "a".repeat(43), "__Host-emo_session="]) {
       expect((await client({ cookie }).call("/api/tasks")).status).toBe(401);
     }
   });
 
   it("treats a malformed percent-encoded session cookie as signed out instead of failing", async () => {
-    const cookie = "__Host-talorys_session=%E0%A4%A";
+    const cookie = "__Host-emo_session=%E0%A4%A";
     expect((await client({ cookie }).call("/api/tasks")).status).toBe(401);
     const session = await client({ cookie }).call("/api/auth/session");
     expect(session.status).toBe(200);
@@ -61,7 +61,7 @@ describe("authentication boundary", () => {
     const res = await c.call("/api/auth/login", { method: "POST", body: { password: password() } });
     expect(res.status).toBe(200);
     const cookie = res.headers.get("set-cookie")!;
-    expect(cookie).toMatch(/^__Host-talorys_session=/);
+    expect(cookie).toMatch(/^__Host-emo_session=/);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("Secure");
     expect(cookie).toContain("SameSite=Strict");
@@ -130,7 +130,7 @@ describe("brute-force protection", () => {
 
   it("refuses Agents SDK sub-agent routes at the Worker", async () => {
     const c = client();
-    for (const path of ["/api/sub/talorys-agent/x/api/auth/login", "/api/sub/talorys-agent/x/api/health", "/api/tasks/sub/talorys-agent/x"]) {
+    for (const path of ["/api/sub/emo-agent/x/api/auth/login", "/api/sub/emo-agent/x/api/health", "/api/tasks/sub/emo-agent/x"]) {
       expect((await c.call(path, { method: "POST", body: { password: password() } })).status).toBe(404);
     }
   });
@@ -138,9 +138,9 @@ describe("brute-force protection", () => {
   it("refuses sub-agent routes inside the agent, where each would get its own empty rate-limit table", async () => {
     const stub = await agentStub();
     const res = await stub.fetch(
-      new Request(`${BASE}/api/sub/talorys-agent/x/api/auth/login`, {
+      new Request(`${BASE}/api/sub/emo-agent/x/api/auth/login`, {
         method: "POST",
-        headers: { "cf-connecting-ip": freshIp(), "x-talorys-request": "1", origin: BASE, "content-type": "application/json" },
+        headers: { "cf-connecting-ip": freshIp(), "x-emo-request": "1", origin: BASE, "content-type": "application/json" },
         body: JSON.stringify({ password: password() }),
       }),
     );
@@ -151,7 +151,7 @@ describe("brute-force protection", () => {
 describe("CSRF protection", () => {
   it("rejects state-changing requests without the custom header", async () => {
     const c = await loggedIn();
-    const res = await c.call("/api/tasks", { method: "POST", body: { title: "x" }, headers: { "x-talorys-request": "" } });
+    const res = await c.call("/api/tasks", { method: "POST", body: { title: "x" }, headers: { "x-emo-request": "" } });
     expect(res.status).toBe(403);
   });
 
@@ -184,7 +184,7 @@ describe("password change", () => {
 
   it("a CLI reset (changed secret) discards the override and all sessions", async () => {
     const { AuthService } = await import("../src/auth/auth-service");
-    const { hashPassword } = await import("@talorys/shared");
+    const { hashPassword } = await import("@emo/shared");
     const c = await loggedIn();
     const newHash = await hashPassword("Reset-by-CLI-123");
     await inAgent(async (ag) => {

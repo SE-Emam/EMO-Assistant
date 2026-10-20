@@ -1,10 +1,10 @@
-import type { PushDevice, PushStatus } from "@talorys/shared";
+import type { PushDevice, PushStatus } from "@emo/shared";
 import { api } from "./api";
 
 /** Why this browser cannot turn on push right now, or null when it can. */
 export type PushBlocker = "unsupported" | "ios-not-installed" | "denied" | null;
 
-const DEVICE_KEY = "talorys.pushDevice";
+const DEVICE_KEY = "emo.pushDevice";
 
 export function isIos(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -31,7 +31,7 @@ function keyBytes(base64url: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }
 
-/** Asks permission (must run from a click), subscribes this browser, and registers it with Talorys. */
+/** Asks permission (must run from a click), subscribes this browser, and registers it with EMO. */
 export async function enablePush(publicKey: string): Promise<{ device: PushDevice; status: PushStatus }> {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") throw new Error("Notifications were not allowed for this site.");

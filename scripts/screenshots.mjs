@@ -9,7 +9,7 @@ import { chromium } from "@playwright/test";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const out = join(root, "docs/screenshots");
 const BASE = "http://localhost:5173";
-const PASSWORD = process.env.TALORYS_DEV_PASSWORD || "talorys-dev-password";
+const PASSWORD = process.env.EMO_DEV_PASSWORD || "emo-dev-password";
 mkdirSync(out, { recursive: true });
 
 const server = spawn("sh", ["-c", "node scripts/dev-setup.mjs && node scripts/ensure-dist.mjs && node scripts/e2e-server.mjs"], {
@@ -36,7 +36,7 @@ async function waitForServer() {
 
 async function seed(request) {
   const post = async (path, data) => {
-    const res = await request.post(`/api${path}`, { data, headers: { "x-talorys-request": "1", origin: BASE } });
+    const res = await request.post(`/api${path}`, { data, headers: { "x-emo-request": "1", origin: BASE } });
     if (!res.ok()) throw new Error(`${path}: ${res.status()} ${await res.text()}`);
     return res.json();
   };

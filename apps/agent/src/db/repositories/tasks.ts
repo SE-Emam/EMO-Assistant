@@ -1,4 +1,4 @@
-import type { Task, TaskPriority, TaskStatus } from "@talorys/shared";
+import type { Task, TaskPriority, TaskStatus } from "@emo/shared";
 import { type Database, likePattern, newId, now } from "../database";
 import { NotFoundError } from "../../api/errors";
 

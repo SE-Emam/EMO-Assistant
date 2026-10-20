@@ -1,6 +1,6 @@
 # Remote access
 
-Machine clients can call your private Talorys install with a **personal access token** (PAT). Tokens are named, scoped (`read` or `write`), shown once at creation, stored only as hashes, and revoked from Settings.
+Machine clients can call your private EMO install with a **personal access token** (PAT). Tokens are named, scoped (`read` or `write`), shown once at creation, stored only as hashes, and revoked from Settings.
 
 This is **not** an MCP server. CORS stays closed: use a server-side client (`curl`, Home Assistant, a CLI, a cron job). Browsers on other origins cannot call these routes.
 
@@ -53,7 +53,7 @@ Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-No `x-talorys-request` CSRF header. No cookies required. JSON request and response bodies match the existing `/api` handlers.
+No `x-emo-request` CSRF header. No cookies required. JSON request and response bodies match the existing `/api` handlers.
 
 Auth ordering: if `Authorization` is present, it must be a valid Bearer token. An invalid or revoked token is **401** and never falls through to a session cookie.
 
@@ -126,18 +126,18 @@ Write mutations are attributed in the activity log in a **coalesced** way: at mo
 
 ## Four scenes
 
-Placeholders: `$TALORYS_URL` (origin, no trailing slash) and `$TALORYS_TOKEN` (plaintext PAT). Never commit or log the token.
+Placeholders: `$EMO_URL` (origin, no trailing slash) and `$EMO_TOKEN` (plaintext PAT). Never commit or log the token.
 
 ### Scene 1 — Home Assistant read
 
 Read-only token. List automations and search for one by meaning (filter kinds/names client-side).
 
 ```bash
-curl -sS -H "Authorization: Bearer $TALORYS_TOKEN" \
-  "$TALORYS_URL/api/automations"
+curl -sS -H "Authorization: Bearer $EMO_TOKEN" \
+  "$EMO_URL/api/automations"
 
-curl -sS -H "Authorization: Bearer $TALORYS_TOKEN" \
-  "$TALORYS_URL/api/semantic/search?q=trash&types=automation"
+curl -sS -H "Authorization: Bearer $EMO_TOKEN" \
+  "$EMO_URL/api/semantic/search?q=trash&types=automation"
 ```
 
 A **409** on search means semantic recall is off — use the automations list and filter locally.
@@ -148,10 +148,10 @@ Write token. Patch an existing note by id.
 
 ```bash
 curl -sS -X PATCH \
-  -H "Authorization: Bearer $TALORYS_TOKEN" \
+  -H "Authorization: Bearer $EMO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"content":"Updated from CLI"}' \
-  "$TALORYS_URL/api/notes/<note-id>"
+  "$EMO_URL/api/notes/<note-id>"
 ```
 
 ### Scene 3 — Voice capture
@@ -160,10 +160,10 @@ Write token. Create a task; dedupe retries client-side (no server idempotency ke
 
 ```bash
 curl -sS -X POST \
-  -H "Authorization: Bearer $TALORYS_TOKEN" \
+  -H "Authorization: Bearer $EMO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Pick up dry cleaning"}' \
-  "$TALORYS_URL/api/tasks"
+  "$EMO_URL/api/tasks"
 ```
 
 ### Scene 4 — Morning digest
@@ -171,11 +171,11 @@ curl -sS -X POST \
 Read token. Today’s tasks plus automations whose `next_run` falls in today (compare using the response `timezone` and today’s bounds).
 
 ```bash
-curl -sS -H "Authorization: Bearer $TALORYS_TOKEN" \
-  "$TALORYS_URL/api/tasks?view=today"
+curl -sS -H "Authorization: Bearer $EMO_TOKEN" \
+  "$EMO_URL/api/tasks?view=today"
 
-curl -sS -H "Authorization: Bearer $TALORYS_TOKEN" \
-  "$TALORYS_URL/api/automations"
+curl -sS -H "Authorization: Bearer $EMO_TOKEN" \
+  "$EMO_URL/api/automations"
 ```
 
 ## Smoke script
@@ -183,7 +183,7 @@ curl -sS -H "Authorization: Bearer $TALORYS_TOKEN" \
 Dependency-free check (Node ≥ 22):
 
 ```bash
-TALORYS_URL="$TALORYS_URL" TALORYS_TOKEN="$TALORYS_TOKEN" \
+EMO_URL="$EMO_URL" EMO_TOKEN="$EMO_TOKEN" \
   node scripts/remote-smoke.mjs
 ```
 

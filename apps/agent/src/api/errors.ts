@@ -1,4 +1,4 @@
-import type { ApiErrorBody, ApiErrorCode } from "@talorys/shared";
+import type { ApiErrorBody, ApiErrorCode } from "@emo/shared";
 import type { ZodError } from "zod";
 
 const STATUS: Record<ApiErrorCode, number> = {

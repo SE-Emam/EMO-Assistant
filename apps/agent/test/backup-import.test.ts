@@ -1,4 +1,4 @@
-import { BACKUP_FORMAT } from "@talorys/shared";
+import { BACKUP_FORMAT } from "@emo/shared";
 import { describe, expect, it } from "vitest";
 import { inAgent, loggedIn, readSse } from "./helpers";
 import { decodeTools } from "../src/db/repositories/conversations";

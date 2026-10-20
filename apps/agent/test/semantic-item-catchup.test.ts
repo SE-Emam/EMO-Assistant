@@ -8,9 +8,9 @@ import { type SemanticContext, selectSemanticMemories } from "../src/semantic/re
 import { ITEM_EMBEDDINGS_PER_DAY, itemUsageToday, pendingItems } from "../src/semantic/itemIndex";
 import { SEARCH_REEMBED_MAX } from "../src/semantic/itemSearch";
 import { UsageService } from "../src/services/usage";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
-function setup(a: TalorysAgent) {
+function setup(a: EmoAgent) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);

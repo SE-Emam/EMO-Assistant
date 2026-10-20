@@ -3,7 +3,7 @@
 ## One command
 
 ```bash
-npx create-talorys@latest
+npx create-emo@latest
 ```
 
 ### Steps the installer performs
@@ -16,7 +16,7 @@ npx create-talorys@latest
 | Choose account (`wrangler whoami --json`) | `install.ts › chooseAccount` |
 | Allocate collision-free names | `install.ts › allocateNames` |
 | Prompt for password (hidden, strength-checked) | `ui.ts`, `secrets.ts` |
-| Write manifest `talorys.json` (no secrets) | `manifest.ts` |
+| Write manifest `emo.json` (no secrets) | `manifest.ts` |
 | Write Worker bundle, frontend, generated `wrangler.jsonc` files | `scaffold.ts`, `config.ts` |
 | Check the Workers AI model exists (no inference) | `wrangler ai models schema` |
 | Deploy the private Worker (creates the SQLite DO on first deploy) | `wrangler deploy` |
@@ -31,16 +31,16 @@ refers to it.
 
 ```jsonc
 {
-  "name": "talorys-<id>-agent",
+  "name": "emo-<id>-agent",
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
   "ai": { "binding": "AI" },
-  "durable_objects": { "bindings": [{ "name": "TalorysAgent", "class_name": "TalorysAgent" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TalorysAgent"] }],
-  "vars": { "TALORYS_INSTALLATION_ID": "…", "TALORYS_DEPLOYED_VERSION": "…", "TALORYS_DEFAULT_TIMEZONE": "…", "TALORYS_AGENT_NAME": "…" }
+  "durable_objects": { "bindings": [{ "name": "EmoAgent", "class_name": "EmoAgent" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["EmoAgent"] }],
+  "vars": { "EMO_INSTALLATION_ID": "…", "EMO_DEPLOYED_VERSION": "…", "EMO_DEFAULT_TIMEZONE": "…", "EMO_AGENT_NAME": "…" }
 }
 ```
 
@@ -48,10 +48,10 @@ refers to it.
 
 ```jsonc
 {
-  "name": "talorys-<id>-web",
+  "name": "emo-<id>-web",
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2026-10-01",
-  "services": [{ "binding": "AGENT", "service": "talorys-<id>-agent" }]
+  "services": [{ "binding": "AGENT", "service": "emo-<id>-agent" }]
 }
 ```
 
@@ -62,7 +62,7 @@ as static assets, so one Worker serves both. Use it with tools that deploy a
 single Worker:
 
 ```bash
-npm run build -w @talorys/web
+npm run build -w @emo/web
 cd apps/agent
 npx wrangler secret put OWNER_PASSWORD -c wrangler.standalone.jsonc
 npx wrangler secret put SESSION_SECRET -c wrangler.standalone.jsonc   # 32+ random characters
@@ -81,14 +81,14 @@ it takes precedence.
 In this mode, changing `SESSION_SECRET` also discards a password changed in the
 UI: login reverts to `OWNER_PASSWORD`, and every device is signed out.
 
-The config names the Worker `talorys`, and `wrangler deploy` replaces any Worker
+The config names the Worker `emo`, and `wrangler deploy` replaces any Worker
 of that name in the account. Change `name` (or pass `--name`) to deploy under
 another one.
 
 ## Push notifications
 
 Web Push needs a VAPID key pair stored as two Worker secrets. The installer
-creates them on a fresh install, and `npx create-talorys@latest update` adds
+creates them on a fresh install, and `npx create-emo@latest update` adds
 them to an installation made before push existed. Existing keys are never
 replaced, because new keys would disconnect every subscribed device.
 
@@ -119,7 +119,7 @@ a plain variable would be dropped when an update regenerates the Worker config.
 
 ## Updates
 
-`npx create-talorys@latest update` refreshes artifacts, keeps the same names
+`npx create-emo@latest update` refreshes artifacts, keeps the same names
 and Durable Object class, appends (never edits) migrations, keeps secrets, and
 re-verifies. Schema migrations run transactionally inside the Durable Object.
 
@@ -132,16 +132,16 @@ A Global API Key is never required.
 ## Publishing the npm package (maintainers)
 
 ```bash
-npm run build -w create-talorys   # builds dist/ and templates/
+npm run build -w create-emo   # builds dist/ and templates/
 npm run test:pack                 # verifies the tarball outside the monorepo
-cd packages/create-talorys && npm publish
+cd packages/create-emo && npm publish
 ```
 
-`TALORYS_VERSION` in `packages/shared/src/constants.ts` must equal the package version.
+`EMO_VERSION` in `packages/shared/src/constants.ts` must equal the package version.
 
 ## Real-account smoke test
 
 ```bash
 CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… npm run test:smoke
-# add TALORYS_SMOKE_AI=1 to include one streamed Workers AI chat turn
+# add EMO_SMOKE_AI=1 to include one streamed Workers AI chat turn
 ```

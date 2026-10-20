@@ -1,10 +1,10 @@
-// Checks machine access to a Talorys install with a personal access token.
-// Usage: TALORYS_URL=<origin> TALORYS_TOKEN=<token> node scripts/remote-smoke.mjs [--read-only] [--expect-revoked]
+// Checks machine access to a EMO install with a personal access token.
+// Usage: EMO_URL=<origin> EMO_TOKEN=<token> node scripts/remote-smoke.mjs [--read-only] [--expect-revoked]
 // Prints one `ok <step>` or `FAIL <step>: <status>` line per step and never the token.
-const USAGE = "usage: TALORYS_URL=<origin> TALORYS_TOKEN=<token> node scripts/remote-smoke.mjs [--read-only] [--expect-revoked]";
+const USAGE = "usage: EMO_URL=<origin> EMO_TOKEN=<token> node scripts/remote-smoke.mjs [--read-only] [--expect-revoked]";
 
-const base = (process.env.TALORYS_URL ?? "").replace(/\/+$/, "");
-const token = process.env.TALORYS_TOKEN ?? "";
+const base = (process.env.EMO_URL ?? "").replace(/\/+$/, "");
+const token = process.env.EMO_TOKEN ?? "";
 const args = new Set(process.argv.slice(2));
 const unknown = [...args].filter((a) => a !== "--read-only" && a !== "--expect-revoked");
 if (!base || !token || unknown.length > 0 || (args.has("--read-only") && args.has("--expect-revoked"))) {

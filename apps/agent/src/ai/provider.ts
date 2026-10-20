@@ -105,10 +105,11 @@ export function estimatedUsage(provider: Pick<AIProvider, "model" | "billable">,
 }
 
 /**
- * Maps Workers AI failures onto stable application errors.
- * 4006: daily free allocation exhausted. 3040 / 429: capacity or rate limits.
+ * Maps provider failures onto stable application errors. Workers AI codes are kept
+ * (4006: daily free allocation exhausted, 3040/429: capacity or rate limits), and the
+ * same messages cover OpenAI-compatible providers such as OpenRouter, Groq and NVIDIA.
  */
-export function classifyAiError(error: unknown): AppError {
+export function classifyAiError(error: unknown, providerLabel = "Workers AI"): AppError {
   if (error instanceof AppError) return error;
   const message = errorMessage(error);
   const lower = message.toLowerCase();
@@ -118,16 +119,44 @@ export function classifyAiError(error: unknown): AppError {
       "Your Cloudflare account has used its Workers AI allocation for today. Tasks, notes, memories and reminders keep working; chat will resume when the quota resets.",
     );
   }
-  if (lower.includes("3040") || lower.includes("capacity") || lower.includes("429") || lower.includes("rate limit") || lower.includes("too many")) {
-    return new AppError("AI_UNAVAILABLE", "Workers AI is busy right now. Please try again in a moment.");
+  if (lower.includes("email_verification") || lower.includes("verify your email") || lower.includes("confirmation link")) {
+    return new AppError(
+      "AI_UNAVAILABLE",
+      `${providerLabel} requires you to verify your email before it will answer. Confirm your email with the provider, then retry.`,
+    );
   }
-  if (lower.includes("5007") || lower.includes("no such model") || lower.includes("model not found")) {
+  if (
+    lower.includes("401") ||
+    lower.includes("403") ||
+    lower.includes("unauthorized") ||
+    lower.includes("forbidden") ||
+    lower.includes("invalid api key") ||
+    lower.includes("incorrect api key")
+  ) {
+    return new AppError(
+      "AI_UNAVAILABLE",
+      `${providerLabel} rejected the API key. Check the key and provider in Settings → AI.`,
+    );
+  }
+  if (lower.includes("3040") || lower.includes("capacity") || lower.includes("429") || lower.includes("rate limit") || lower.includes("too many")) {
+    return new AppError("AI_UNAVAILABLE", `${providerLabel} is rate-limiting requests. Please try again in a moment.`);
+  }
+  if (lower.includes("5007") || lower.includes("no such model") || lower.includes("model not found") || lower.includes("404")) {
     return new AppError("AI_UNAVAILABLE", "The configured AI model is not available. Choose another model in Settings.");
+  }
+  if (
+    lower.includes("fetch failed") ||
+    lower.includes("network") ||
+    lower.includes("enotfound") ||
+    lower.includes("econnrefused") ||
+    lower.includes("failed to fetch")
+  ) {
+    return new AppError("AI_UNAVAILABLE", `Could not reach ${providerLabel}. Check the base URL and your connection.`);
   }
   if (lower.includes("abort")) {
     return new AppError("AI_UNAVAILABLE", "The response was cancelled.");
   }
-  console.error("Workers AI error", message);
+  console.error(`${providerLabel} error`, message);
   return new AppError("AI_UNAVAILABLE", "The AI model could not respond. Please try again.");
 }
 

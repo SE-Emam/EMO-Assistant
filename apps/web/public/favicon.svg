@@ -1,1 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#0f766e"/><path d="M20 22h24M32 22v22" stroke="#f0fdfa" stroke-width="6" stroke-linecap="round"/><circle cx="44" cy="44" r="4" fill="#5eead4"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="EMO">
+  <rect width="64" height="64" rx="16" fill="#0033df" />
+  <path d="M149 1466H1363V1153H603V920H1308V621H603V332H1385V0H149Z" fill="#fff" transform="translate(16 50) scale(0.0235 -0.0235)" />
+</svg>

@@ -1,12 +1,13 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { checkPasswordStrength, GITHUB_URL, LIMIT_CEILINGS, type Limits, type MemoryHistorySettings, type Settings, TALORYS_VERSION } from "@talorys/shared";
+import { AI_PROVIDERS, aiProviderPreset, checkPasswordStrength, GITHUB_URL, LIMIT_CEILINGS, type AiProviderId, type Limits, type MemoryHistorySettings, type Settings, EMO_VERSION } from "@emo/shared";
 import { Download, ExternalLink, LogOut, Monitor, Moon, Sun, Upload } from "lucide-react";
 import { Badge, Button, Card, ConfirmDialog, ErrorNotice, Input, Label, PageHeader, Select, Spinner, Switch } from "../components/ui";
 import { SemanticRecallCard } from "../components/SemanticRecallCard";
 import { PushNotificationsCard } from "../components/PushNotificationsCard";
 import { RemoteAccessCard } from "../components/RemoteAccessCard";
+import { LanguageToggle } from "../components/LanguageToggle";
 import { UsageBreakdown, UsagePricingNote } from "../components/UsageBreakdown";
 import { keys, useApiMutation, useSessions, useSettings, useSystemInfo, useUpdateStatus, useUsage } from "../hooks/queries";
 import { useSession } from "../hooks/session";
@@ -14,8 +15,38 @@ import { useToast, errorMessage } from "../hooks/toast";
 import { api, ApiError } from "../lib/api";
 import { applyTheme } from "../lib/theme";
 import { cn, relativeTime } from "../lib/utils";
+import { useI18n, type TranslationKey } from "../lib/i18n";
+
+const PROVIDER_KEYS: Record<AiProviderId, { label: TranslationKey; description: TranslationKey }> = {
+  "workers-ai": { label: "ai.workersAi.label", description: "ai.workersAi.description" },
+  openai: { label: "ai.openai.label", description: "ai.openai.description" },
+  openrouter: { label: "ai.openrouter.label", description: "ai.openrouter.description" },
+  groq: { label: "ai.groq.label", description: "ai.groq.description" },
+  nvidia: { label: "ai.nvidia.label", description: "ai.nvidia.description" },
+  "opencode-zen": { label: "ai.opencodeZen.label", description: "ai.opencodeZen.description" },
+  gemini: { label: "ai.gemini.label", description: "ai.gemini.description" },
+  ollama: { label: "ai.ollama.label", description: "ai.ollama.description" },
+  custom: { label: "ai.custom.label", description: "ai.custom.description" },
+};
+
+function passwordStrengthMessage(message: string, t: (key: TranslationKey, vars?: Record<string, string | number>) => string): string {
+  const min = /Use at least (\d+) characters/.exec(message);
+  if (min) return t("settings.passwordMin", { count: min[1]! });
+  if (message.startsWith("Use at most")) return t("settings.passwordMax");
+  if (message.startsWith("Avoid repeating")) return t("settings.passwordRepeated");
+  if (message.startsWith("Mix letters")) return t("settings.passwordMix");
+  if (message.startsWith("Avoid common")) return t("settings.passwordCommon");
+  return message;
+}
 
 const TABS = ["General", "AI", "Privacy", "Security", "About"] as const;
+const TAB_LABELS: Record<(typeof TABS)[number], string> = {
+  General: "settings.general",
+  AI: "settings.ai",
+  Privacy: "settings.tab.privacy",
+  Security: "settings.security",
+  About: "settings.about",
+};
 type Tab = (typeof TABS)[number];
 
 function Row({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
@@ -42,6 +73,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export default function SettingsPage() {
+  const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const param = searchParams.get("tab");
   const tab: Tab = TABS.find((t) => t === param) ?? "General";
@@ -49,20 +81,20 @@ export default function SettingsPage() {
   const { data: settings, isLoading, error, refetch } = useSettings();
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
-      <PageHeader title="Settings" />
+      <PageHeader title={t("settings.title")} />
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-border" role="tablist">
-        {TABS.map((t) => (
+        {TABS.map((tabId) => (
           <button type="button"
-            key={t}
+            key={tabId}
             role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
+            aria-selected={tab === tabId}
+            onClick={() => setTab(tabId)}
             className={cn(
               "-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-              tab === t ? "border-accent text-fg" : "border-transparent text-fg-muted hover:text-fg",
+              tab === tabId ? "border-accent text-fg" : "border-transparent text-fg-muted hover:text-fg",
             )}
           >
-            {t}
+            {t(TAB_LABELS[tabId])}
           </button>
         ))}
       </div>
@@ -88,26 +120,34 @@ export default function SettingsPage() {
 
 function useSaveSettings() {
   const qc = useQueryClient();
-  type Patch = Partial<Omit<Settings, "limits" | "memoryHistory">> & { limits?: Partial<Limits>; memoryHistory?: Partial<MemoryHistorySettings> };
-  return useApiMutation((patch: Patch) => api<{ settings: Settings }>("/settings", { method: "PATCH", body: patch }), {
-    success: "Settings saved",
+  const { t } = useI18n();
+  type Patch = Partial<Omit<Settings, "limits" | "memoryHistory">> & {
+    limits?: Partial<Limits>;
+    memoryHistory?: Partial<MemoryHistorySettings>;
+    /** Write-only. Null clears the stored key. */
+    aiApiKey?: string | null;
+  };
+  return useApiMutation((patch: Patch) => api<{ settings: Settings; aiKeySet: boolean }>("/settings", { method: "PATCH", body: patch }), {
+    success: t("settings.saved"),
     onSuccess: (r) => {
       qc.setQueryData(keys.settings, r.settings);
       void qc.invalidateQueries({ queryKey: ["session"] });
       void qc.invalidateQueries({ queryKey: keys.automations });
       void qc.invalidateQueries({ queryKey: keys.update });
+      void qc.invalidateQueries({ queryKey: keys.system });
     },
   });
 }
 
 function GeneralTab({ settings }: { settings: Settings }) {
+  const { t } = useI18n();
   const save = useSaveSettings();
   const [name, setName] = useState(settings.agentName);
   const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [settings.timezone];
   const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
-    <Section title="General">
-      <Row label="Agent name" hint="How your assistant introduces itself.">
+    <Section title={t("settings.general.title")}>
+      <Row label={t("settings.nameLabel")} hint={t("settings.nameDescription")}>
         <form
           className="flex gap-2"
           onSubmit={(e) => {
@@ -115,25 +155,25 @@ function GeneralTab({ settings }: { settings: Settings }) {
             if (name.trim() && name !== settings.agentName) save.mutate({ agentName: name.trim() });
           }}
         >
-          <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label="Agent name" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label={t("settings.nameLabel")} />
           <Button type="submit" variant="outline" disabled={!name.trim() || name === settings.agentName}>
-            Save
+            {t("common.save")}
           </Button>
         </form>
       </Row>
       <Row
-        label="Timezone"
+        label={t("settings.timezone")}
         hint={
           settings.timezone !== browserTz ? (
             <button type="button" className="text-accent underline-offset-2 hover:underline" onClick={() => save.mutate({ timezone: browserTz })}>
-              Use this device's timezone ({browserTz})
+              {t("settings.useDeviceTimezone", { zone: browserTz })}
             </button>
           ) : (
-            "Used for due dates and schedules. Changing it re-schedules automations."
+            t("settings.timezoneDescription")
           )
         }
       >
-        <Select value={settings.timezone} onChange={(e) => save.mutate({ timezone: e.target.value })} aria-label="Timezone">
+        <Select value={settings.timezone} onChange={(e) => save.mutate({ timezone: e.target.value })} aria-label={t("settings.timezone")}>
           {(zones.includes(settings.timezone) ? zones : [settings.timezone, ...zones]).map((z) => (
             <option key={z} value={z}>
               {z}
@@ -141,7 +181,12 @@ function GeneralTab({ settings }: { settings: Settings }) {
           ))}
         </Select>
       </Row>
-      <Row label="Theme">
+      <Row label={t("settings.language")} hint={t("settings.languageHint")}>
+        <div className="flex justify-end">
+          <LanguageToggle />
+        </div>
+      </Row>
+      <Row label={t("settings.themeLabel")}>
         <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
           {(
             [
@@ -162,7 +207,7 @@ function GeneralTab({ settings }: { settings: Settings }) {
               )}
             >
               <Icon className="h-3.5 w-3.5" />
-              {value}
+              {t(`settings.theme.${value}`)}
             </button>
           ))}
         </div>
@@ -172,66 +217,145 @@ function GeneralTab({ settings }: { settings: Settings }) {
 }
 
 const LIMIT_FIELDS: { key: keyof Limits; label: string; hint: string }[] = [
-  { key: "maxOutputTokens", label: "Max output tokens", hint: "Upper bound for each AI reply." },
-  { key: "maxContextTokens", label: "Max context tokens", hint: "Recent history sent to the model. Older messages are summarized." },
-  { key: "maxToolCalls", label: "Max tool calls per request", hint: "0 disables tools entirely." },
-  { key: "maxAgentIterations", label: "Max reasoning steps", hint: "Model round-trips per request." },
-  { key: "maxAiRequestsPerDay", label: "Max AI requests per day", hint: "Hard daily cap enforced by Talorys." },
-  { key: "maxScheduledAiRunsPerDay", label: "Max scheduled AI runs per day", hint: "Budget for AI routines. Reminders never use AI." },
+  { key: "maxOutputTokens", label: "settings.limitOutput", hint: "settings.limitOutputHint" },
+  { key: "maxContextTokens", label: "settings.limitContext", hint: "settings.limitContextHint" },
+  { key: "maxToolCalls", label: "settings.limitTools", hint: "settings.limitToolsHint" },
+  { key: "maxAgentIterations", label: "settings.limitSteps", hint: "settings.limitStepsHint" },
+  { key: "maxAiRequestsPerDay", label: "settings.limitRequests", hint: "settings.limitRequestsHint" },
+  { key: "maxScheduledAiRunsPerDay", label: "settings.limitRuns", hint: "settings.limitRunsHint" },
 ];
 
 function AiTab({ settings }: { settings: Settings }) {
+  const { t } = useI18n();
   const save = useSaveSettings();
   const usage = useUsage();
+  const info = useSystemInfo();
+  const [provider, setProvider] = useState<AiProviderId>(settings.aiProvider);
   const [model, setModel] = useState(settings.model);
+  const [baseUrl, setBaseUrl] = useState(settings.aiBaseUrl);
+  const [apiKey, setApiKey] = useState("");
   const [limits, setLimits] = useState<Limits>(settings.limits);
   const [temperature, setTemperature] = useState(settings.temperature);
   const dirtyLimits = JSON.stringify(limits) !== JSON.stringify(settings.limits) || temperature !== settings.temperature;
+  const preset = aiProviderPreset(provider);
+  const needsKey = !preset.keyless;
+  const keySet = info.data?.ai_key_set ?? false;
+  const changed = provider !== settings.aiProvider || model !== settings.model || baseUrl !== settings.aiBaseUrl || apiKey.trim() !== "";
+  const valid = model.trim().length > 0 && (provider !== "custom" || baseUrl.trim().length > 0);
+
+  const changeProvider = (next: AiProviderId) => {
+    const previous = aiProviderPreset(provider);
+    setProvider(next);
+    // Move the placeholder model along, but never overwrite an id the owner typed.
+    if (!model.trim() || model === previous.defaultModel) setModel(aiProviderPreset(next).defaultModel);
+    if (next !== "custom") setBaseUrl("");
+  };
+
+  const saveModel = () => {
+    save.mutate({
+      aiProvider: provider,
+      model: model.trim(),
+      aiBaseUrl: baseUrl.trim(),
+      ...(apiKey.trim() ? { aiApiKey: apiKey.trim() } : {}),
+    });
+    setApiKey("");
+  };
+
   return (
     <>
-      <Section title="Model">
-        <Row label="Workers AI model" hint="Default: @cf/zai-org/glm-4.7-flash. Must support tool calling.">
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (model !== settings.model) save.mutate({ model: model.trim() });
-            }}
-          >
-            <Input value={model} onChange={(e) => setModel(e.target.value)} aria-label="Model id" className="font-mono text-xs" />
-            <Button type="submit" variant="outline" disabled={model === settings.model}>
-              Save
-            </Button>
-          </form>
+      <Section title={t("settings.modelSection")}>
+        <Row label={t("settings.provider")} hint={t(PROVIDER_KEYS[provider].description)}>
+          <Select value={provider} onChange={(e) => changeProvider(e.target.value as AiProviderId)} aria-label={t("settings.providerAria")}>
+            {AI_PROVIDERS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {t(PROVIDER_KEYS[p.id].label)}
+              </option>
+            ))}
+          </Select>
         </Row>
-        <Row label="Learn from conversations" hint="Let Talorys save clearly lasting preferences without being asked. Off = only explicit “remember …”.">
-          <div className="flex justify-end">
-            <Switch checked={settings.autoMemory} onChange={(v) => save.mutate({ autoMemory: v })} label="Learn from conversations" />
+        <Row label={t("settings.model")} hint={t("settings.modelHint", { default: preset.defaultModel ? t("settings.modelDefault", { model: preset.defaultModel }) : "" })}>
+          <Input value={model} onChange={(e) => setModel(e.target.value)} aria-label={t("settings.modelAria")} className="font-mono text-xs" placeholder={preset.defaultModel} />
+        </Row>
+        <Row
+          label={provider === "custom" ? t("settings.baseUrl") : t("settings.baseUrlOverride")}
+          hint={provider === "custom" ? t("settings.baseUrlRequired") : t("settings.baseUrlHint", { target: preset.baseUrl ?? t("settings.providerDefault") })}
+        >
+          <Input
+            value={baseUrl}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            aria-label={t("settings.baseUrl")}
+            className="font-mono text-xs"
+            placeholder={preset.baseUrl ?? "https://example.com/v1"}
+          />
+        </Row>
+        {needsKey && (
+          <Row
+            label={t("settings.apiKey")}
+            hint={keySet ? t("settings.apiKeyStored") : t("settings.apiKeyHint")}
+          >
+            <Input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              aria-label={t("settings.apiKeyAria")}
+              autoComplete="off"
+              placeholder={keySet ? t("settings.apiKeyConfiguredPlaceholder") : t("settings.apiKeyPlaceholder")}
+              className="font-mono text-xs"
+            />
+          </Row>
+        )}
+        <Row label={t("settings.status")} hint={t("settings.statusHint")}>
+          <div className="space-y-1 text-end text-xs text-fg-muted">
+            <Badge tone={info.data?.ai_ready ? "success" : "warning"}>{info.data?.ai_ready ? t("settings.ready") : t("settings.notConfigured")}</Badge>
+            <p>
+              {t("settings.keyLabel")}: {needsKey ? (keySet ? t("settings.keyConfigured") : t("settings.keyMissing")) : t("settings.keyNotRequired")}
+            </p>
           </div>
         </Row>
-        <Row label="Demo mode" hint="Replaces Workers AI with a simple offline responder. Useful when your AI quota is exhausted. Never enabled automatically.">
+        <div className="flex justify-end gap-2 px-5 py-3">
+          {needsKey && keySet && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                save.mutate({ aiApiKey: null });
+                setApiKey("");
+              }}
+            >
+              {t("settings.clearKey")}
+            </Button>
+          )}
+          <Button onClick={saveModel} disabled={!changed || !valid} loading={save.isPending}>
+            {t("settings.saveModel")}
+          </Button>
+        </div>
+        <Row label={t("settings.learn")} hint={t("settings.learnHint")}>
           <div className="flex justify-end">
-            <Switch checked={settings.demoMode} onChange={(v) => save.mutate({ demoMode: v })} label="Demo mode" />
+            <Switch checked={settings.autoMemory} onChange={(v) => save.mutate({ autoMemory: v })} label={t("settings.learn")} />
+          </div>
+        </Row>
+        <Row label={t("settings.demo")} hint={t("settings.demoDescription")}>
+          <div className="flex justify-end">
+            <Switch checked={settings.demoMode} onChange={(v) => save.mutate({ demoMode: v })} label={t("settings.demo")} />
           </div>
         </Row>
       </Section>
 
-      <Section title="Generation & execution limits">
-        <Row label="Temperature" hint="Lower is more focused and predictable.">
+      <Section title={t("settings.limitsSection")}>
+        <Row label={t("settings.temperature")} hint={t("settings.temperatureHint")}>
           <div className="flex items-center gap-3">
-            <input type="range" min={0} max={1.5} step={0.1} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} className="flex-1 accent-[var(--accent)]" aria-label="Temperature" />
-            <span className="w-8 text-right text-sm tabular-nums">{temperature.toFixed(1)}</span>
+            <input type="range" min={0} max={1.5} step={0.1} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} className="flex-1 accent-[var(--accent)]" aria-label={t("settings.temperatureAria")} />
+            <span className="w-8 text-end text-sm tabular-nums">{temperature.toFixed(1)}</span>
           </div>
         </Row>
         {LIMIT_FIELDS.map((f) => (
-          <Row key={f.key} label={f.label} hint={`${f.hint} Max ${LIMIT_CEILINGS[f.key]}.`}>
+          <Row key={f.key} label={t(f.label)} hint={`${t(f.hint)} ${t("settings.maxValue", { value: LIMIT_CEILINGS[f.key] })}`}>
             <Input
               type="number"
               min={0}
               max={LIMIT_CEILINGS[f.key]}
               value={limits[f.key]}
               onChange={(e) => setLimits({ ...limits, [f.key]: Number(e.target.value) })}
-              aria-label={f.label}
+              aria-label={t(f.label)}
             />
           </Row>
         ))}
@@ -244,15 +368,15 @@ function AiTab({ settings }: { settings: Settings }) {
               setTemperature(settings.temperature);
             }}
           >
-            Reset
+            {t("settings.reset")}
           </Button>
           <Button disabled={!dirtyLimits} loading={save.isPending} onClick={() => save.mutate({ limits, temperature })}>
-            Save limits
+            {t("settings.saveLimits")}
           </Button>
         </div>
       </Section>
 
-      <Section title="Usage">
+      <Section title={t("settings.usageSection")}>
         {usage.isLoading || !usage.data ? (
           <div className="flex justify-center p-6">
             <Spinner />
@@ -261,10 +385,10 @@ function AiTab({ settings }: { settings: Settings }) {
           <>
             <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
               {[
-                ["Chat-model requests today", `${usage.data.today.ai_requests} / ${usage.data.limits.maxAiRequestsPerDay}`],
-                ["AI errors today", usage.data.today.ai_errors.toLocaleString()],
-                ["Tool calls today", String(usage.data.today.tool_calls)],
-                ["Scheduled AI runs", `${usage.data.today.scheduled_ai_runs} / ${usage.data.limits.maxScheduledAiRunsPerDay}`],
+                [t("settings.requestsToday"), `${usage.data.today.ai_requests} / ${usage.data.limits.maxAiRequestsPerDay}`],
+                [t("settings.errorsToday"), usage.data.today.ai_errors.toLocaleString()],
+                [t("settings.toolCallsToday"), String(usage.data.today.tool_calls)],
+                [t("settings.scheduledRunsToday"), `${usage.data.today.scheduled_ai_runs} / ${usage.data.limits.maxScheduledAiRunsPerDay}`],
               ].map(([label, value]) => (
                 <div key={label} className="bg-surface px-5 py-4">
                   <p className="text-xs text-fg-subtle">{label}</p>
@@ -274,25 +398,28 @@ function AiTab({ settings }: { settings: Settings }) {
             </div>
             <div className="grid gap-px bg-border md:grid-cols-2">
               <div className="bg-surface px-5 py-4">
-                <h3 className="mb-3 text-sm font-medium">Today (UTC)</h3>
+                <h3 className="mb-3 text-sm font-medium">{t("settings.todayUTC")}</h3>
                 <UsageBreakdown counters={usage.data.today} />
               </div>
               <div className="bg-surface px-5 py-4">
-                <h3 className="mb-3 text-sm font-medium">Last 7 days</h3>
+                <h3 className="mb-3 text-sm font-medium">{t("settings.last7")}</h3>
                 <p className="mb-3 text-xs tabular-nums text-fg-muted">
-                  {usage.data.last_7_days.ai_requests.toLocaleString()} chat-model requests · {usage.data.last_7_days.ai_errors.toLocaleString()} errors · {usage.data.last_7_days.tool_calls.toLocaleString()} tool calls · {usage.data.last_7_days.scheduled_ai_runs.toLocaleString()} scheduled AI runs
+                  {t("settings.last7Summary", { requests: usage.data.last_7_days.ai_requests.toLocaleString(), errors: usage.data.last_7_days.ai_errors.toLocaleString(), tools: usage.data.last_7_days.tool_calls.toLocaleString(), runs: usage.data.last_7_days.scheduled_ai_runs.toLocaleString() })}
                 </p>
                 <UsageBreakdown counters={usage.data.last_7_days} />
               </div>
             </div>
             <div className="px-5 py-4 text-xs leading-5 text-fg-subtle">
               <Badge tone="warning" className="mb-2">
-                Estimates, not billing data
+                {t("settings.estimatesBadge")}
               </Badge>
               <UsagePricingNote data={usage.data} />
-              <a href={usage.data.dashboard_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-accent hover:underline">
-                Open Workers AI usage in the Cloudflare dashboard <ExternalLink className="h-3 w-3" />
-              </a>
+              {usage.data.dashboard_url && (
+                <a href={usage.data.dashboard_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-accent hover:underline">
+                  {settings.aiProvider === "workers-ai" ? t("settings.openWorkersUsage") : t("settings.openProviderDocs", { provider: aiProviderPreset(settings.aiProvider).label })}{" "}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
             </div>
           </>
         )}
@@ -304,22 +431,23 @@ function AiTab({ settings }: { settings: Settings }) {
 }
 
 function MemoryHistorySection({ settings }: { settings: Settings }) {
+  const { t } = useI18n();
   const save = useSaveSettings();
   const mh = settings.memoryHistory;
   return (
-    <Section title="Memory history">
+    <Section title={t("settings.memoryHistorySection")}>
       <Row
-        label="Memory conflict review"
-        hint="Flags a new memory that may replace or contradict an older one (“I sold my car…”) for your review on the Memory page. Never retires a memory on its own. Uses no AI."
+        label={t("settings.conflictReview")}
+        hint={t("settings.conflictReviewHint")}
       >
         <div className="flex justify-end">
-          <Switch checked={mh.conflictReview} onChange={(v) => save.mutate({ memoryHistory: { conflictReview: v } })} label="Memory conflict review" />
+          <Switch checked={mh.conflictReview} onChange={(v) => save.mutate({ memoryHistory: { conflictReview: v } })} label={t("settings.conflictReview")} />
         </div>
       </Row>
       {mh.conflictReview && (
-        <Row label="Check conflicts with AI" hint="Let Clef, Cloudflare's decision model, decide whether a new memory replaces an older one. Only a confident replacement marks the older one as past; unclear cases wait for review. Uses one AI request per save that has possible conflicts.">
+        <Row label={t("settings.aiConflict")} hint={t("settings.aiConflictHint")}>
           <div className="flex justify-end">
-            <Switch checked={mh.aiConflictCheck} onChange={(v) => save.mutate({ memoryHistory: { aiConflictCheck: v } })} label="Check conflicts with AI" />
+            <Switch checked={mh.aiConflictCheck} onChange={(v) => save.mutate({ memoryHistory: { aiConflictCheck: v } })} label={t("settings.aiConflict")} />
           </div>
         </Row>
       )}
@@ -328,6 +456,7 @@ function MemoryHistorySection({ settings }: { settings: Settings }) {
 }
 
 function PrivacyTab() {
+  const { t } = useI18n();
   const toast = useToast();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -337,7 +466,7 @@ function PrivacyTab() {
     (what: "history" | "memories") => api(what === "history" ? "/conversations" : "/memories", { method: "DELETE", body: { confirm: "DELETE" } }),
     {
       invalidate: [["conversations"], ["memories"]],
-      success: (r) => `Deleted ${(r as { deleted: number }).deleted} item(s)`,
+      success: (r) => t("settings.deletedItems", { count: (r as { deleted: number }).deleted }),
       onSuccess: () => setConfirm(null),
     },
   );
@@ -345,7 +474,7 @@ function PrivacyTab() {
   async function onImport(file: File) {
     setImporting(true);
     try {
-      if (file.size > 25 * 1024 * 1024) throw new Error("Backup file is larger than 25 MB.");
+      if (file.size > 25 * 1024 * 1024) throw new Error(t("settings.backupTooLarge"));
       const json = JSON.parse(await file.text());
       const r = await api<{ imported: Record<string, number> & { automations_paused: number; ignored_settings: string[] } }>("/import", {
         method: "POST",
@@ -353,13 +482,13 @@ function PrivacyTab() {
       });
       const { automations_paused, ignored_settings, ...counts } = r.imported;
       const notes = [
-        automations_paused ? `${automations_paused} automation(s) imported paused — enable them in Automations` : "",
-        ignored_settings.length ? `kept your current ${ignored_settings.join(", ")} settings` : "",
+        automations_paused ? t("settings.importedPaused", { count: automations_paused }) : "",
+        ignored_settings.length ? t("settings.importedKept", { keys: ignored_settings.join(", ") }) : "",
       ].filter(Boolean);
-      toast(`Imported ${Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", ")}${notes.length ? `. ${notes.join("; ")}.` : ""}`);
+      toast(t("settings.imported", { counts: Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", "), notes: notes.length ? `. ${notes.join("; ")}.` : "" }));
       await qc.invalidateQueries();
     } catch (error) {
-      toast(error instanceof SyntaxError ? "That file is not valid JSON." : errorMessage(error), "error");
+      toast(error instanceof SyntaxError ? t("settings.invalidJson") : errorMessage(error), "error");
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -368,39 +497,39 @@ function PrivacyTab() {
 
   return (
     <>
-      <Section title="Your data">
+      <Section title={t("settings.dataSection")}>
         <div className="px-5 py-4 text-sm leading-6 text-fg-muted">
-          Everything Talorys stores lives in a Durable Object in your own Cloudflare account. Nothing is sent to the Talorys developers. Messages are processed by Cloudflare Workers AI when you chat.
+          {t("settings.dataDescription")}
         </div>
-        <Row label="Export data" hint="Conversations, memories, tasks, notes, projects, settings and automations as talorys-backup.json. Sessions and credentials are never exported.">
-          <a href="/api/export" download="talorys-backup.json" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-medium hover:bg-subtle">
-            <Download className="h-4 w-4" /> Download backup
+        <Row label={t("settings.export")} hint={t("settings.exportHint")}>
+          <a href="/api/export" download="emo-backup.json" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-medium hover:bg-subtle">
+            <Download className="h-4 w-4" /> {t("settings.downloadBackup")}
           </a>
         </Row>
-        <Row label="Import data" hint="Merges a backup into your data. Existing items with the same id are updated, except automations, which are kept as they are; new automations arrive paused. Model, limits, demo mode, auto-memory and memory history settings are not imported. Nothing is deleted.">
+        <Row label={t("settings.import")} hint={t("settings.importHint")}>
           <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => e.target.files?.[0] && void onImport(e.target.files[0])} />
           <Button variant="outline" className="w-full justify-center" loading={importing} onClick={() => fileRef.current?.click()}>
-            <Upload className="h-4 w-4" /> Choose backup file
+            <Upload className="h-4 w-4" /> {t("settings.chooseBackup")}
           </Button>
         </Row>
       </Section>
-      <Section title="Danger zone">
-        <Row label="Delete conversation history" hint="Permanently deletes all conversations and messages.">
+      <Section title={t("settings.dangerSection")}>
+        <Row label={t("settings.deleteHistory")} hint={t("settings.deleteHistoryHint")}>
           <Button variant="outline" className="w-full justify-center text-danger" onClick={() => setConfirm("history")}>
-            Delete history
+            {t("settings.deleteHistoryButton")}
           </Button>
         </Row>
-        <Row label="Clear memories" hint="Talorys forgets everything it learned about you.">
+        <Row label={t("settings.clearMemories")} hint={t("settings.clearMemoriesHint")}>
           <Button variant="outline" className="w-full justify-center text-danger" onClick={() => setConfirm("memories")}>
-            Clear memories
+            {t("settings.clearMemoriesButton")}
           </Button>
         </Row>
       </Section>
       <ConfirmDialog
         open={!!confirm}
-        title={confirm === "history" ? "Delete all conversations?" : "Clear all memories?"}
-        message="This cannot be undone. Consider exporting a backup first."
-        confirmLabel={confirm === "history" ? "Delete all" : "Clear all"}
+        title={confirm === "history" ? t("settings.deleteAllTitle") : t("settings.clearAllTitle")}
+        message={t("settings.deleteAllMessage")}
+        confirmLabel={confirm === "history" ? t("settings.deleteAll") : t("settings.clearAll")}
         onCancel={() => setConfirm(null)}
         onConfirm={() => confirm && clear.mutate(confirm)}
         loading={clear.isPending}
@@ -410,6 +539,7 @@ function PrivacyTab() {
 }
 
 function SecurityTab() {
+  const { t } = useI18n();
   const { logout } = useSession();
   const sessions = useSessions();
   const [current, setCurrent] = useState("");
@@ -419,58 +549,58 @@ function SecurityTab() {
   const strength = next ? checkPasswordStrength(next) : null;
   const change = useApiMutation(() => api("/auth/password", { method: "POST", body: { current_password: current, new_password: next } }), {
     invalidate: [keys.sessions],
-    success: "Password changed. Other devices were signed out.",
+    success: t("settings.passwordChanged"),
     onSuccess: () => {
       setCurrent("");
       setNext("");
       setConfirmNext("");
     },
   });
-  const revoke = useApiMutation((id: string) => api(`/auth/sessions/${id}`, { method: "DELETE" }), { invalidate: [keys.sessions], success: "Session signed out" });
+  const revoke = useApiMutation((id: string) => api(`/auth/sessions/${id}`, { method: "DELETE" }), { invalidate: [keys.sessions], success: t("settings.sessionSignedOut") });
   const revokeOthers = useApiMutation(() => api("/auth/sessions/revoke-others", { method: "POST", body: {} }), {
     invalidate: [keys.sessions],
-    success: "Signed out other sessions",
+    success: t("settings.signedOutOthers"),
   });
   useEffect(() => setFormError(change.error instanceof ApiError ? change.error.message : null), [change.error]);
 
   return (
     <>
-      <Section title="Change password">
+      <Section title={t("settings.changePassword")}>
         <form
           className="space-y-4 px-5 py-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (next !== confirmNext) return setFormError("New passwords do not match.");
-            if (strength) return setFormError(strength);
+            if (next !== confirmNext) return setFormError(t("settings.passwordsMismatch"));
+            if (strength) return setFormError(passwordStrengthMessage(strength, t));
             setFormError(null);
             change.mutate(undefined);
           }}
         >
           <input type="text" autoComplete="username" value="owner" readOnly hidden />
           <div>
-            <Label htmlFor="pw-current">Current password</Label>
+            <Label htmlFor="pw-current">{t("settings.currentPassword")}</Label>
             <Input id="pw-current" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="pw-new">New password</Label>
+              <Label htmlFor="pw-new">{t("settings.newPassword")}</Label>
               <Input id="pw-new" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
-              {next && <p className={cn("mt-1 text-xs", strength ? "text-warning" : "text-success")}>{strength ?? "Strong enough"}</p>}
+              {next && <p className={cn("mt-1 text-xs", strength ? "text-warning" : "text-success")}>{strength ? passwordStrengthMessage(strength, t) : t("settings.strongEnough")}</p>}
             </div>
             <div>
-              <Label htmlFor="pw-confirm">Confirm new password</Label>
+              <Label htmlFor="pw-confirm">{t("settings.confirmPassword")}</Label>
               <Input id="pw-confirm" type="password" autoComplete="new-password" value={confirmNext} onChange={(e) => setConfirmNext(e.target.value)} />
             </div>
           </div>
           {formError && <p className="text-sm text-danger">{formError}</p>}
           <div className="flex justify-end">
             <Button type="submit" loading={change.isPending} disabled={!current || !next || !confirmNext}>
-              Change password
+              {t("settings.changePasswordButton")}
             </Button>
           </div>
         </form>
       </Section>
-      <Section title="Active sessions">
+      <Section title={t("settings.activeSessions")}>
         {sessions.isLoading ? (
           <div className="flex justify-center p-6">
             <Spinner />
@@ -480,15 +610,15 @@ function SecurityTab() {
             <div key={s.id} className="flex items-center justify-between gap-3 px-5 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm">
-                  {describeAgent(s.user_agent)} {s.current && <Badge tone="accent">This device</Badge>}
+                  {describeAgent(s.user_agent)} {s.current && <Badge tone="accent">{t("settings.thisDevice")}</Badge>}
                 </p>
                 <p className="text-xs text-fg-subtle">
-                  Signed in {relativeTime(s.created_at)} · active {relativeTime(s.last_seen_at)}
+                  {t("settings.signedIn", { created: relativeTime(s.created_at), seen: relativeTime(s.last_seen_at) })}
                 </p>
               </div>
               {!s.current && (
                 <Button variant="ghost" size="sm" onClick={() => revoke.mutate(s.id)}>
-                  Sign out
+                  {t("settings.signOut")}
                 </Button>
               )}
             </div>
@@ -496,16 +626,16 @@ function SecurityTab() {
         )}
         <div className="flex flex-wrap justify-end gap-2 px-5 py-3">
           <Button variant="outline" size="sm" onClick={() => revokeOthers.mutate(undefined)} loading={revokeOthers.isPending}>
-            Sign out other sessions
+            {t("settings.signOutOthers")}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => void logout()}>
-            <LogOut className="h-3.5 w-3.5" /> Lock this device
+            <LogOut className="h-3.5 w-3.5" /> {t("settings.lockDevice")}
           </Button>
         </div>
       </Section>
       <p className="px-1 text-xs leading-5 text-fg-subtle">
-        Forgot your password? On your computer, run <code className="rounded bg-muted px-1">npx create-talorys@latest reset-password</code> in your Talorys
-        directory. This signs out every device.
+        {t("settings.forgotPassword", { command: "" })}
+        <code className="rounded bg-muted px-1" dir="ltr">npx create-emo@latest reset-password</code>
       </p>
       <RemoteAccessCard />
     </>
@@ -519,43 +649,51 @@ function describeAgent(ua: string): string {
 }
 
 function AboutTab({ settings }: { settings: Settings }) {
+  const { t } = useI18n();
   const info = useSystemInfo();
   const update = useUpdateStatus();
   const save = useSaveSettings();
   const latest = update.data?.update_available ? update.data.latest : null;
   return (
-    <Section title="About Talorys">
-      <Row label="Version" hint={latest ? `Version ${latest} is available. Run the update command below.` : undefined}>
+    <Section title={t("settings.aboutSection")}>
+      <Row label={t("settings.version")} hint={latest ? t("settings.versionAvailable", { version: latest }) : undefined}>
         <div className="flex items-center justify-end gap-2">
-          {latest && <Badge tone="accent">New</Badge>}
-          <p className="font-mono text-sm">{info.data?.deployed_version ?? TALORYS_VERSION}</p>
+          {latest && <Badge tone="accent">{t("settings.new")}</Badge>}
+          <p className="font-mono text-sm">{info.data?.deployed_version ?? EMO_VERSION}</p>
         </div>
       </Row>
-      <Row label="Check for updates" hint="Once a day, your Worker asks the npm registry for the latest version number. Nothing about you or your data is sent.">
+      <Row label={t("settings.updateCheck")} hint={t("settings.checkUpdatesHint")}>
         <div className="flex justify-end">
-          <Switch checked={settings.updateCheck} onChange={(v) => save.mutate({ updateCheck: v })} label="Check for updates" />
+          <Switch checked={settings.updateCheck} onChange={(v) => save.mutate({ updateCheck: v })} label={t("settings.updateCheck")} />
         </div>
       </Row>
-      <Row label="Deployment" hint="Your own Cloudflare account. Pages frontend → service binding → private Worker → Durable Object.">
-        <div className="space-y-1 text-right text-xs text-fg-muted">
+      <Row label={t("settings.deployment")} hint={t("settings.deploymentHint")}>
+        <div className="space-y-1 text-end text-xs text-fg-muted">
           {info.data ? (
             <>
-              <p>Installation: <span className="font-mono">{info.data.installation_id ?? "local"}</span></p>
-              <p>Schema v{info.data.schema_version} · {info.data.environment}</p>
-              <p>AI: {info.data.ai_provider === "workers-ai" ? "Cloudflare Workers AI" : info.data.ai_provider === "mock" ? "Demo responder" : "Not available"}</p>
+              <p>{t("settings.installation")}: <span className="font-mono">{info.data.installation_id ?? "local"}</span></p>
+              <p>{t("settings.schema", { schema: info.data.schema_version, env: info.data.environment })}</p>
+              <p>
+                {t("settings.ai")}:{" "}
+                {info.data.ai_provider === "mock"
+                  ? t("settings.demoResponder")
+                  : info.data.ai_ready
+                    ? aiProviderPreset(info.data.ai_selected_provider as AiProviderId).label
+                    : t("settings.notConfigured")}
+              </p>
             </>
           ) : (
-            <Spinner className="ml-auto h-4 w-4" />
+            <Spinner className="ms-auto h-4 w-4" />
           )}
         </div>
       </Row>
-      <Row label="Source code" hint="Free and open source under the MIT license.">
+      <Row label={t("settings.sourceCode")} hint={t("settings.sourceHint")}>
         <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-end gap-1 text-sm text-accent hover:underline">
           GitHub <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </Row>
-      <Row label="Update" hint="Run in your Talorys directory. Your data is preserved.">
-        <code className="block rounded bg-muted px-2 py-1 text-right text-xs">npx create-talorys@latest update</code>
+      <Row label={t("settings.update")} hint={t("settings.updateHint")}>
+        <code className="block rounded bg-muted px-2 py-1 text-end text-xs">npx create-emo@latest update</code>
       </Row>
     </Section>
   );

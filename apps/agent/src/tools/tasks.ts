@@ -1,4 +1,4 @@
-import { TASK_PRIORITIES, TASK_STATUSES, type Task } from "@talorys/shared";
+import { TASK_PRIORITIES, TASK_STATUSES, type Task } from "@emo/shared";
 import { z } from "zod";
 import { defineTool, quoteTitle, ToolError, type ToolContext } from "./registry";
 import { formatLocal, localDayBounds, parseLocalDateTime } from "../services/time";

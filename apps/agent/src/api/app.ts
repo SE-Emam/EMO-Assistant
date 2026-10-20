@@ -1,6 +1,6 @@
-import type { RemoteScope } from "@talorys/shared";
+import type { RemoteScope } from "@emo/shared";
 import { Hono } from "hono";
-import type { TalorysAgent } from "../agent/talorys-agent";
+import type { EmoAgent } from "../agent/emo-agent";
 import type { Env } from "../env";
 import { errorResponse, NotFoundError } from "./errors";
 import { csrfProtection, requireSession, securityHeaders } from "./middleware";
@@ -15,7 +15,7 @@ import { remoteAuth } from "../remote/middleware";
 import { remoteRoutes } from "../remote/routes";
 
 export interface AppEnv {
-  Bindings: { agent: TalorysAgent; env: Env };
+  Bindings: { agent: EmoAgent; env: Env };
   Variables: {
     sessionId: string | null;
     /** The validated access token behind a Bearer request; null for cookie and anonymous requests. */

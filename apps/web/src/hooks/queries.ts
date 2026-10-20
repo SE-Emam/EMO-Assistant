@@ -14,7 +14,7 @@ import type {
   Settings,
   Task,
   UsageReport,
-} from "@talorys/shared";
+} from "@emo/shared";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { errorMessage, useToast } from "./toast";
@@ -165,7 +165,19 @@ export function useSystemInfo() {
   return useQuery({
     queryKey: keys.system,
     queryFn: () =>
-      api<{ version: string; deployed_version: string | null; installation_id: string | null; schema_version: number; ai_binding: boolean; ai_provider: string; environment: string }>("/system"),
+      api<{
+        version: string;
+        deployed_version: string | null;
+        installation_id: string | null;
+        schema_version: number;
+        ai_binding: boolean;
+        ai_provider: string;
+        ai_selected_provider: string;
+        ai_model: string;
+        ai_key_set: boolean;
+        ai_ready: boolean;
+        environment: string;
+      }>("/system"),
   });
 }
 

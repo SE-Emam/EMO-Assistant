@@ -1,4 +1,4 @@
-import type { RemoteScope } from "@talorys/shared";
+import type { RemoteScope } from "@emo/shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { MAX_REMOTE_AUTH_FAILURES, REMOTE_REQUESTS_PER_WINDOW } from "../src/remote/tokens";
 import { bearer, client, freshIp, inAgent, password } from "./helpers";

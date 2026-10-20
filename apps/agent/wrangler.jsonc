@@ -1,8 +1,8 @@
-// Local development configuration for the Talorys agent Worker.
+// Local development configuration for the EMO agent Worker.
 // The installer generates the production equivalent with unique names.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "talorys-dev-agent",
+  "name": "emo-dev-agent",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -11,8 +11,8 @@
   "preview_urls": false,
   "ai": { "binding": "AI" },
   "durable_objects": {
-    "bindings": [{ "name": "TalorysAgent", "class_name": "TalorysAgent" }]
+    "bindings": [{ "name": "EmoAgent", "class_name": "EmoAgent" }]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TalorysAgent"] }],
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["EmoAgent"] }],
   "observability": { "enabled": true }
 }

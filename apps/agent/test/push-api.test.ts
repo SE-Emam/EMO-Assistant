@@ -1,4 +1,4 @@
-import { MAX_PUSH_DEVICES } from "@talorys/shared";
+import { MAX_PUSH_DEVICES } from "@emo/shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { client, inAgent, loggedIn } from "./helpers";
 import { fakeBrowser } from "./push-helpers";
@@ -44,7 +44,7 @@ describe("push API", () => {
     expect((await anon.call("/api/push")).status).toBe(401);
     const c = await loggedIn();
     const browser = await fakeBrowser();
-    const res = await c.call("/api/push/subscriptions", { method: "POST", body: browser.json, headers: { "x-talorys-request": "0" } });
+    const res = await c.call("/api/push/subscriptions", { method: "POST", body: browser.json, headers: { "x-emo-request": "0" } });
     expect(res.status).toBe(403);
     expect((await c.json("/api/push")).devices).toEqual([]);
   });

@@ -1,4 +1,4 @@
-import { type ChatMessage, type Conversation, type ToolActivity, toolActivitySchema } from "@talorys/shared";
+import { type ChatMessage, type Conversation, type ToolActivity, toolActivitySchema } from "@emo/shared";
 import { type Database, likePattern, newId, now } from "../database";
 import { NotFoundError } from "../../api/errors";
 

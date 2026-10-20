@@ -10,7 +10,7 @@ import { semanticTools } from "../src/semantic/tools";
 import type { ToolContext } from "../src/tools";
 import type { ImmediateTool } from "../src/tools/registry";
 import type { Services } from "../src/services/container";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 type Entry = { id: string; title?: string; name?: string; match?: string };
 type SearchResult = { tasks: Entry[]; notes: Entry[]; automations: Entry[] };
@@ -35,7 +35,7 @@ function turn(s: Services, embedder: FixtureEmbedder) {
   return { sem, recall: semanticMemorySelector(sem), run };
 }
 
-async function setup(a: TalorysAgent) {
+async function setup(a: EmoAgent) {
   const s = a.services;
   reset(s);
   const embedder = new FixtureEmbedder();

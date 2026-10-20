@@ -1,13 +1,13 @@
 # Security Policy
 
-Talorys runs in each user's own Cloudflare account, so a vulnerability can
+EMO runs in each user's own Cloudflare account, so a vulnerability can
 expose someone's personal data. Thank you for reporting responsibly.
 
 ## Supported versions
 
-Only the latest published version of `create-talorys`, and the agent it
+Only the latest published version of `create-emo`, and the agent it
 deploys, receives security fixes. Users update with
-`npx create-talorys@latest update`.
+`npx create-emo@latest update`.
 
 ## Reporting a vulnerability
 
@@ -31,7 +31,7 @@ In scope, for example:
 
 - authentication or session bypass, CSRF, login rate-limit bypass
 - reaching the agent Worker, its storage or the AI binding without the owner session
-- secrets or credentials leaked to the browser, logs, `talorys.json` or exports
+- secrets or credentials leaked to the browser, logs, `emo.json` or exports
 - prompt injection that makes the agent perform write or destructive actions
   without owner confirmation, or escape its tool restrictions
 - the installer deleting or overwriting data or unrelated Cloudflare resources

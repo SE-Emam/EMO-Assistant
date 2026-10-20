@@ -1,4 +1,4 @@
-import type { Automation, Note, Task } from "@talorys/shared";
+import type { Automation, Note, Task } from "@emo/shared";
 import { presentTask } from "../tools/tasks";
 import { conservativeEmbeddingTokens } from "./embeddings";
 import type { ItemType } from "./itemStore";

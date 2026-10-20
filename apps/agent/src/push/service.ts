@@ -1,4 +1,4 @@
-import { MAX_PUSH_DEVICES, type Notification, type PushStatus } from "@talorys/shared";
+import { MAX_PUSH_DEVICES, type Notification, type PushStatus } from "@emo/shared";
 import { clip } from "../services/text";
 import { encryptPayload } from "./ece";
 import { fromB64url } from "./encoding";

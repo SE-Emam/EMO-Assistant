@@ -1,7 +1,7 @@
 # Semantic recall
 
 Semantic recall is an opt-in module that finds memories by meaning as well as by
-keyword. It is off by default. While it is off, Talorys behaves exactly like
+keyword. It is off by default. While it is off, EMO behaves exactly like
 upstream: same tools, same system prompt, same memory responses, and no
 `tal_semantic_*` tables.
 
@@ -18,7 +18,7 @@ embedding model, daily cap and Reindex settings.
 
 The installer can turn it on for you: answer Yes to "Enable semantic recall?",
 or pass `--semantic` (`--no-semantic` or `-y` alone means No). A Yes adds the
-Worker var `TALORYS_SEMANTIC_DEFAULT=on`, and the agent enables the feature once
+Worker var `EMO_SEMANTIC_DEFAULT=on`, and the agent enables the feature once
 on first boot. After that, Settings is the source of truth.
 
 Enabling creates the module's tables. Existing memories are embedded in the

@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import type { Memory } from "@talorys/shared";
+import type { Memory } from "@emo/shared";
 import { describe, expect, it, vi } from "vitest";
 import { inAgent, loggedIn } from "./helpers";
 import golden from "./fixtures/recall-golden.json";
@@ -30,7 +30,7 @@ import {
 import { type SemanticContext, hybridSearch } from "../src/semantic/recall";
 import { cachedVectors, convertLegacyVectors, dot, normalize } from "../src/semantic/vectorStore";
 import type { Services } from "../src/services/container";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import { MIGRATIONS } from "../src/db/migrations";
 
 const MOCK_MODEL = "mock-bge-384";
@@ -218,7 +218,7 @@ interface GoldenCase {
 }
 
 /** Seeds a golden case, indexes it with `embedder` and runs hybrid recall. */
-async function recall(a: TalorysAgent, c: GoldenCase, embedder: Embedder) {
+async function recall(a: EmoAgent, c: GoldenCase, embedder: Embedder) {
   const s = a.services;
   reset(s);
   c.memories.forEach((m, i) => {
@@ -277,7 +277,7 @@ const vectorReads = (spy: { mock: { calls: unknown[][] } }) =>
 
 describe("vector cache", () => {
   /** Two indexed memories with an enabled config; returns their ids and the warm cache map. */
-  async function warm(a: TalorysAgent) {
+  async function warm(a: EmoAgent) {
     const s = a.services;
     reset(s);
     writeSemanticConfig(s.settings, { enabled: true, maxEmbeddingsPerDay: 10_000 }, s.db);

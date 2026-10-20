@@ -1,6 +1,6 @@
 export type ThemePreference = "system" | "light" | "dark";
 
-const KEY = "talorys.theme";
+const KEY = "emo.theme";
 let media: MediaQueryList | null = null;
 
 function resolve(pref: ThemePreference): "light" | "dark" {

@@ -1,4 +1,4 @@
-import type { Memory } from "@talorys/shared";
+import type { Memory } from "@emo/shared";
 import type { Env } from "../env";
 import { type Usage, estimateTokens } from "../ai/provider";
 import type { Services } from "../services/container";

@@ -6,7 +6,7 @@
 			"!**/node_modules",
 			"!**/dist",
 			"!**/.wrangler",
-			"!packages/create-talorys/templates",
+			"!packages/create-emo/templates",
 			"!test-results",
 			"!playwright-report"
 		]

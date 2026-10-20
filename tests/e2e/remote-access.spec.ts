@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const PASSWORD = process.env.TALORYS_DEV_PASSWORD || "talorys-dev-password";
-const CSRF = { "x-talorys-request": "1" };
+const PASSWORD = process.env.EMO_DEV_PASSWORD || "emo-dev-password";
+const CSRF = { "x-emo-request": "1" };
 
 async function login(page: Page) {
   await page.goto("/");
@@ -43,7 +43,7 @@ test.describe("Remote access", () => {
     await expect(toggle).toHaveAttribute("aria-checked", "false");
     await expect(page.getByText("Suspended", { exact: true })).toBeVisible();
     await expect(
-      page.getByText("Create personal access tokens so scripts and other apps can use your Talorys data over HTTPS."),
+      page.getByText("Create personal access tokens so scripts and other apps can use your EMO data over HTTPS."),
     ).toBeVisible();
     await expect(page.getByText("Tokens stay suspended until you turn this back on.")).toBeVisible();
     await expect(page.getByRole("link", { name: "How to use access tokens" })).toHaveAttribute("href", /\/blob\/main\/docs\/remote-access\.md$/);

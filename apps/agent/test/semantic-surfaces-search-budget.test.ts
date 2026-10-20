@@ -7,7 +7,7 @@ import { dropSemanticData } from "../src/semantic/migrations";
 import type { SemanticContext } from "../src/semantic/recall";
 import { itemPassRunning, pendingItems, runItemPass } from "../src/semantic/itemIndex";
 import { SEARCH_REEMBED_MAX, prepareSurfaceSearch } from "../src/semantic/itemSearch";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 const QUERY = "where did I put the passport";
 
@@ -27,7 +27,7 @@ class GatedEmbedder extends MockEmbedder {
 }
 
 /** Clears items and semantic state, seeds `n` unindexed tasks and returns a context capturing waitUntil. */
-function pendingTasks(a: TalorysAgent, n: number) {
+function pendingTasks(a: EmoAgent, n: number) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);

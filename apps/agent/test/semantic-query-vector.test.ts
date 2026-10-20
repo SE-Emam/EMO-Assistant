@@ -14,7 +14,7 @@ import {
   selectSemanticMemories,
 } from "../src/semantic/recall";
 import { UsageService } from "../src/services/usage";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import type { Env } from "../src/env";
 
 const workerEnv = env as unknown as Env;
@@ -38,7 +38,7 @@ class CountingEmbedder extends MockEmbedder {
 }
 
 /** Clears memories and semantic state and returns an enabled literal context, as tests elsewhere build it. */
-function context(a: TalorysAgent) {
+function context(a: EmoAgent) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);

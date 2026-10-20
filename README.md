@@ -1,39 +1,40 @@
-# Talorys
+# EMO
 
 **Your personal AI agent. Your own cloud.**
 
 Website: [rociiu.github.io/talorys](https://rociiu.github.io/talorys/)
 
-Talorys is a free, open-source personal AI assistant that runs entirely inside
+EMO is a free, open-source personal AI assistant that runs entirely inside
 **your own Cloudflare account**. It chats with you, remembers what matters,
 manages tasks, notes and projects, and runs reminders and routines on a
-schedule — without any server, database or account operated by the Talorys
+schedule — without any server, database or account operated by the EMO
 developers.
 
 One person. One Cloudflare account. One command. One personal AI agent.
 
 ```bash
-npx create-talorys@latest
+npx create-emo@latest
 ```
 
 Or install it with [Appflare](https://appflare.dev), which deploys it as a
 [single Worker](docs/deployment.md#one-worker-without-pages):
 
-[![Install with Appflare](https://appflare.dev/badge.svg)](https://appflare.dev/install/talorys/)
+[![Install with Appflare](https://appflare.dev/badge.svg)](https://appflare.dev/install/emo/)
 
 ---
 
-## 1. What Talorys is
+## 1. What EMO is
 
 - **A private assistant** — chat with streaming responses, Markdown and tool activity indicators.
 - **Memory** — durable personal facts and preferences you can view, edit and delete. Only the most relevant memories are sent to the model on each turn.
 - **Semantic recall (optional)** — finds memories by meaning as well as keyword, lists them newest first with their saved date, and lets the agent find tasks, notes and automations by meaning. Off by default; turn it on with the **Semantic memory recall** switch near the bottom of Settings → AI (its other settings appear once it is on), or install with `--semantic`. See [docs/semantic-recall.md](docs/semantic-recall.md).
-- **Memory history** — facts that change over time: when you say you sold your car, Talorys asks you whether the old one is now a past fact, and with the optional AI check a confident answer does it for you. Unclear conflicts also wait for your review. See [docs/memory-history.md](docs/memory-history.md).
+- **Memory history** — facts that change over time: when you say you sold your car, EMO asks you whether the old one is now a past fact, and with the optional AI check a confident answer does it for you. Unclear conflicts also wait for your review. See [docs/memory-history.md](docs/memory-history.md).
 - **Tasks, notes and projects** — full CRUD in the UI, and from chat ("Add a task to review my project tomorrow"). Chat task due dates reject impossible calendar dates, including timestamps with explicit UTC offsets.
 - **Automations** — one-time and recurring reminders, daily task digests and optional AI routines, delivered to an in-app notification center. They run on Durable Object alarms, so nothing has to stay online.
-- **Push notifications** — reminders, digests and routines also arrive as system notifications on the phones and computers you turn them on for, even when Talorys is closed (Settings → General). Uses standard Web Push, encrypted end to end; on iPhone and iPad, add Talorys to the Home Screen first.
+- **Push notifications** — reminders, digests and routines also arrive as system notifications on the phones and computers you turn them on for, even when EMO is closed (Settings → General). Uses standard Web Push, encrypted end to end; on iPhone and iPad, add EMO to the Home Screen first.
+- **Choose your AI provider** — Cloudflare Workers AI stays the default and needs no key. Settings → AI also supports OpenAI, OpenRouter, Groq, NVIDIA NIM, OpenCode Zen, Google Gemini, local Ollama and any custom OpenAI-compatible endpoint. API keys are stored encrypted in your Durable Object and never leave it.
 - **Single-user by design** — no signup, no accounts, no teams. The installer sets the owner password.
-- **Works without AI** — tasks, notes, memories and reminders keep working if Workers AI is unavailable or your free quota is used up.
+- **Works without AI** — tasks, notes, memories and reminders keep working if the selected provider is unavailable, unconfigured or out of quota.
 
 ### Screenshots
 
@@ -54,7 +55,7 @@ Browser ──HTTPS──▶ Cloudflare Pages (React app + /api Pages Function)
                    Private Worker (Hono router)
                          │  getAgentByName("personal-agent")
                          ▼
-                   TalorysAgent — Cloudflare Agents SDK Durable Object
+                   EmoAgent — Cloudflare Agents SDK Durable Object
                      ├─ SQLite: conversations, memories, tasks, notes, projects,
                      │          automations, sessions, settings, usage
                      ├─ Workers AI: @cf/zai-org/glm-4.7-flash (streaming + tool calling)
@@ -77,15 +78,17 @@ More detail: [docs/architecture.md](docs/architecture.md).
 | Cloudflare Pages | Frontend + Pages Function | Yes |
 | Cloudflare Workers | Private API Worker | Yes |
 | Durable Objects (SQLite) | All data, scheduling alarms | Yes |
-| Workers AI | Chat model (`@cf/zai-org/glm-4.7-flash`) | Yes, daily allocation |
+| Workers AI | Default chat model (`@cf/zai-org/glm-4.7-flash`) and semantic embeddings | Yes, daily allocation |
 
-Talorys does **not** provision R2, D1, KV, Vectorize, AI Search, Workflows or any
-paid service.
+Workers AI is optional for chat: you can point EMO at another provider in
+Settings → AI. Semantic recall still uses Workers AI embeddings. EMO does
+**not** provision R2, D1, KV, Vectorize, AI Search, Workflows or any paid
+service.
 
 ## 4. Deploy
 
 ```bash
-npx create-talorys@latest
+npx create-emo@latest
 ```
 
 The installer:
@@ -94,12 +97,12 @@ The installer:
 2. Verifies your Cloudflare login, or **opens Cloudflare's authorization page in your browser**.
 3. Lets you choose an account (if you have several) and an agent name.
 4. Asks for an owner password (hidden input, strength-checked). It is hashed locally with PBKDF2-SHA256 and stored only as a Cloudflare secret.
-5. Generates a 256-bit session secret, a Web Push key pair, and unique resource names (`talorys-<id>-agent`, `talorys-<id>-web`).
+5. Generates a 256-bit session secret, a Web Push key pair, and unique resource names (`emo-<id>-agent`, `emo-<id>-web`).
 6. Deploys the private Worker (creating its SQLite Durable Object), stores secrets, creates and deploys the Pages project with the service binding.
 7. Verifies the live deployment (frontend, auth endpoint, unauthenticated rejection, storage health) **without** running any AI inference.
 8. Prints the real `https://….pages.dev` URL reported by Cloudflare.
 
-It writes a `talorys/` directory containing `talorys.json` (installation id,
+It writes a `emo/` directory containing `emo.json` (installation id,
 account id, resource names, URL — **no secrets**) and the deployable artifacts.
 Keep it for updates.
 
@@ -107,7 +110,7 @@ Keep it for updates.
 what already exists: no duplicate resources, no password re-prompt if the
 password is already configured, and **no data is ever deleted**.
 
-Non-interactive installs: `TALORYS_OWNER_PASSWORD=... npx create-talorys@latest --yes --account-id <id>`
+Non-interactive installs: `EMO_OWNER_PASSWORD=... npx create-emo@latest --yes --account-id <id>`
 (with `CLOUDFLARE_API_TOKEN` set if you are not logged in).
 
 ### Permissions
@@ -121,7 +124,8 @@ use an API token instead, it needs:
 - Account › Account Settings › Read
 - User › User Details › Read (optional; shows your email)
 
-See [docs/deployment.md](docs/deployment.md).
+See [docs/deployment.md](docs/deployment.md). For alternative chat providers and
+API-key handling, see [docs/ai-providers.md](docs/ai-providers.md).
 
 ## 5. Access
 
@@ -129,10 +133,10 @@ Open the URL the installer prints, enter your owner password, and start chatting
 Sign in from any number of devices — they are all the same owner. Manage
 sessions under **Settings → Security**.
 
-Forgot the password? From your `talorys/` directory:
+Forgot the password? From your `emo/` directory:
 
 ```bash
-npx create-talorys@latest reset-password
+npx create-emo@latest reset-password
 ```
 
 This replaces the password secret and signs out every device.
@@ -140,7 +144,7 @@ This replaces the password secret and signs out every device.
 ## 6. Where your data lives
 
 All data is stored in a single SQLite-backed Durable Object (`personal-agent`)
-**in your Cloudflare account**. Talorys has no telemetry, analytics, tracking or
+**in your Cloudflare account**. EMO has no telemetry, analytics, tracking or
 advertising code and sends nothing to its developers.
 
 Cloudflare processes your data to provide its services — including running
@@ -153,7 +157,7 @@ Calling the API from scripts with personal access tokens: [docs/remote-access.md
 
 ## 7. What is free and what may cost money
 
-Talorys is designed to fit the **Cloudflare Workers Free plan** and never enables
+EMO is designed to fit the **Cloudflare Workers Free plan** and never enables
 paid features on its own. It is not "unlimited free", though:
 
 - Free plans have account-level quotas (requests, Durable Object usage, a daily
@@ -162,6 +166,9 @@ paid features on its own. It is not "unlimited free", though:
   after the daily reset. Everything else keeps working, and your data is untouched.
 - If your account is on a paid plan, usage beyond included amounts is billed by
   Cloudflare under your plan.
+- When you choose another provider, that provider bills your account directly
+  under its own terms. EMO's local token and cost estimates only price Workers AI
+  models; other models stay unpriced rather than being guessed.
 
 Built-in guardrails (adjustable in **Settings → AI**): max output tokens, max
 context tokens (older history is summarized), max tool calls and reasoning
@@ -192,7 +199,7 @@ Requirements: Node.js 22+.
 
 ```bash
 git clone https://github.com/rociiu/talorys.git
-cd talorys
+cd emo
 npm install
 npm run dev
 ```
@@ -200,8 +207,8 @@ npm run dev
 `npm run dev` starts the agent Worker (`wrangler dev`, port 8787), the Pages
 Function proxy with its service binding (`wrangler pages dev`, port 8788) and
 the Vite UI (http://localhost:5173) in one terminal. It creates
-`apps/agent/.dev.vars` with a local password (`talorys-dev-password`, override
-with `TALORYS_DEV_PASSWORD`) and uses the deterministic mock AI provider, so no
+`apps/agent/.dev.vars` with a local password (`emo-dev-password`, override
+with `EMO_DEV_PASSWORD`) and uses the deterministic mock AI provider, so no
 Cloudflare login is needed. State persists in `.wrangler/state`.
 
 Other scripts: `npm run build`, `npm test`, `npm run test:e2e`, `npm run test:pack`,
@@ -209,7 +216,7 @@ Other scripts: `npm run build`, `npm test`, `npm run test:e2e`, `npm run test:pa
 
 ## 9. Back up your data
 
-**Settings → Privacy → Download backup** produces `talorys-backup.json` with
+**Settings → Privacy → Download backup** produces `emo-backup.json` with
 conversations, memories, tasks, notes, projects, settings and automations
 (never sessions or credentials). **Import** validates the file and merges it in
 one transaction; importing the same backup twice is harmless, and a memory you
@@ -224,10 +231,10 @@ result lists any it skipped).
 
 ## 10. Update
 
-From your `talorys/` directory:
+From your `emo/` directory:
 
 ```bash
-npx create-talorys@latest update
+npx create-emo@latest update
 ```
 
 This redeploys the latest Worker and frontend to the **same** resources. The
@@ -245,16 +252,16 @@ and transactionally on first request. Also available: `status` and `doctor`.
 | Chat says the AI allocation is used up | Wait for the daily reset; or enable Demo mode in Settings → AI. |
 | Locked out after failed logins | Wait 15 minutes, or reset the password with the CLI. |
 
-`npx create-talorys@latest doctor` checks everything automatically. More in
+`npx create-emo@latest doctor` checks everything automatically. More in
 [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Repository layout
 
 ```
-apps/agent              Private Worker: Hono API, TalorysAgent, tools, SQLite repositories
+apps/agent              Private Worker: Hono API, EmoAgent, tools, SQLite repositories
 apps/web                React + Vite app, Pages Function (functions/api/[[path]].ts)
 packages/shared         Zod schemas, types, recurrence/DST logic, password hashing
-packages/create-talorys The one-command installer (npm package)
+packages/create-emo The one-command installer (npm package)
 tests/e2e               Playwright UI tests
 tests/smoke             Optional real-account deployment test
 docs/                   Architecture, deployment, development, security, troubleshooting
@@ -262,7 +269,7 @@ docs/                   Architecture, deployment, development, security, trouble
 
 ## Credits
 
-Thanks to everyone who has contributed to Talorys:
+Thanks to everyone who has contributed to EMO:
 
 - [Roc Yu (@rociiu)](https://github.com/rociiu) — creator and maintainer
 - [Derek (@KrunchMuffin)](https://github.com/KrunchMuffin) — Node.js 22 requirement, task deletion and

@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatStreamEvent, PendingAction, ToolActivity } from "@talorys/shared";
+import type { ChatMessage, ChatStreamEvent, PendingAction, ToolActivity } from "@emo/shared";
 import type { Services } from "../services/container";
 import { type AIProvider, classifyAiError, estimateTokens, type ProviderTool, usageOfFailure } from "../ai/provider";
 import { AppError, NotFoundError } from "../api/errors";
@@ -123,7 +123,6 @@ export class AgentRunner {
       let summary = conversation.summary;
       let summaryUpto = conversation.summary_upto;
       const baseSystem = buildSystemPrompt({
-        agentName: settings.agentName,
         timezone: settings.timezone,
         now: new Date(),
         autoMemory: settings.autoMemory,
@@ -160,7 +159,6 @@ export class AgentRunner {
       const system = summary === conversation.summary
         ? baseSystem
         : buildSystemPrompt({
-            agentName: settings.agentName,
             timezone: settings.timezone,
             now: new Date(),
             autoMemory: settings.autoMemory,
@@ -249,7 +247,6 @@ export class AgentRunner {
       { maxToolCalls: Math.min(settings.limits.maxToolCalls, 4) },
     );
     const system = buildSystemPrompt({
-      agentName: settings.agentName,
       timezone: settings.timezone,
       now: new Date(),
       autoMemory: false,
@@ -290,5 +287,5 @@ export class AgentRunner {
 }
 
 function aiLimitReached(max: number): AppError {
-  return new AppError("AI_LIMIT_REACHED", `Talorys reached its daily limit of ${max} AI requests (adjustable in Settings → AI).`);
+  return new AppError("AI_LIMIT_REACHED", `EMO reached its daily limit of ${max} AI requests (adjustable in Settings → AI).`);
 }

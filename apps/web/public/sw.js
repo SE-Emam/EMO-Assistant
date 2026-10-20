@@ -1,4 +1,4 @@
-// Talorys service worker. It only shows Web Push notifications: nothing is cached, so the
+// EMO service worker. It only shows Web Push notifications: nothing is cached, so the
 // app always loads fresh from the network. Payloads arrive encrypted end to end (RFC 8291).
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -25,7 +25,7 @@ self.addEventListener("push", (event) => {
   } catch {
     data = { body: event.data ? event.data.text() : "" };
   }
-  const title = typeof data.title === "string" && data.title ? data.title : "Talorys";
+  const title = typeof data.title === "string" && data.title ? data.title : "EMO";
   // Every push must show a notification; browsers revoke permission from silent pushes.
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -58,7 +58,7 @@ self.addEventListener("pushsubscriptionchange", (event) => {
   event.waitUntil(
     (async () => {
       const sub = event.newSubscription ?? (await self.registration.pushManager.subscribe(options));
-      const headers = { "content-type": "application/json", "x-talorys-request": "1" };
+      const headers = { "content-type": "application/json", "x-emo-request": "1" };
       // Free the old endpoint's device slot first, so the new one is not refused at the device limit.
       if (event.oldSubscription?.endpoint) {
         await fetch("/api/push/unsubscribe", {

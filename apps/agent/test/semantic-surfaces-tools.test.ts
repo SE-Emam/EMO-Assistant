@@ -11,7 +11,7 @@ import { ALL_TOOLS, type ToolContext, type ToolDefinition } from "../src/tools";
 import type { ImmediateTool } from "../src/tools/registry";
 import { presentTask } from "../src/tools/tasks";
 import type { Services } from "../src/services/container";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 type TaskList = { count: number; tasks: { id: string; title: string; match?: string }[] };
 type NoteResults = { results: { id: string; title: string; excerpt: string; match?: string }[] };
@@ -25,7 +25,7 @@ function reset(s: Services) {
 }
 
 /** An enabled context over the agent's database, searched with the fixture embedder. */
-function context(a: TalorysAgent, embedder: FixtureEmbedder | null = new FixtureEmbedder()) {
+function context(a: EmoAgent, embedder: FixtureEmbedder | null = new FixtureEmbedder()) {
   const s = a.services;
   const sem: SemanticContext = { db: s.db, services: s, embedder, config: fixtureConfig(), queryVectors: new Map() };
   const toolCtx: ToolContext = { services: s, timezone: "UTC", mode: "chat" };
@@ -35,7 +35,7 @@ function context(a: TalorysAgent, embedder: FixtureEmbedder | null = new Fixture
   return { s, sem, run };
 }
 
-function setup(a: TalorysAgent) {
+function setup(a: EmoAgent) {
   reset(a.services);
   return context(a);
 }

@@ -1,4 +1,4 @@
-import { BACKUP_FORMAT } from "@talorys/shared";
+import { BACKUP_FORMAT } from "@emo/shared";
 import { describe, expect, it } from "vitest";
 import { inAgent, loggedIn } from "./helpers";
 import { invalidateSemanticCache } from "../src/semantic";

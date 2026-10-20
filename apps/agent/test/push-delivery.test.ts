@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import { b64url } from "../src/push/encoding";
 import { MAX_PUSH_FAILURES, PushSubscriptionRepository } from "../src/push/repository";
 import { PushService, toPushMessage } from "../src/push/service";
@@ -10,7 +10,7 @@ beforeEach(async () => {
   await inAgent((agent) => agent.services.db.run(`DELETE FROM tal_push_subscriptions`));
 });
 
-async function subscribe(agent: TalorysAgent, endpoint?: string) {
+async function subscribe(agent: EmoAgent, endpoint?: string) {
   const browser = await fakeBrowser(endpoint);
   agent.services.push.subscriptions.save({
     endpoint: browser.endpoint, p256dh: b64url(browser.p256dh), auth: b64url(browser.auth), label: "Test", origin: "https://me.pages.dev",

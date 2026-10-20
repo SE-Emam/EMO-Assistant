@@ -130,7 +130,7 @@ describe("chat (mock provider)", () => {
     const actionId = toolEnd.approval.id;
     // Anonymous callers and requests without the CSRF header cannot approve.
     expect((await client().call(`/api/actions/${actionId}/approve`, { method: "POST", body: {} })).status).toBe(401);
-    expect((await c.call(`/api/actions/${actionId}/approve`, { method: "POST", body: {}, headers: { "x-talorys-request": "" } })).status).toBe(403);
+    expect((await c.call(`/api/actions/${actionId}/approve`, { method: "POST", body: {}, headers: { "x-emo-request": "" } })).status).toBe(403);
     expect((await c.call(`/api/tasks/${task.id}`)).status).toBe(200);
 
     const approved = await c.json(`/api/actions/${actionId}/approve`, { method: "POST", body: {} });
@@ -197,7 +197,7 @@ describe("settings, usage, export and import", () => {
     expect((await c.call("/api/settings", { method: "PATCH", body: { limits: { maxToolCalls: 9999 } } })).status).toBe(400);
     const { settings } = await c.json("/api/settings", { method: "PATCH", body: { agentName: "Ada", timezone: "Europe/Paris" } });
     expect(settings).toMatchObject({ agentName: "Ada", timezone: "Europe/Paris", model: "@cf/zai-org/glm-4.7-flash" });
-    await c.json("/api/settings", { method: "PATCH", body: { agentName: "Talorys", timezone: "UTC" } });
+    await c.json("/api/settings", { method: "PATCH", body: { agentName: "EMO", timezone: "UTC" } });
   });
 
   it("reports local usage estimates and clearly labels them", async () => {
@@ -211,11 +211,11 @@ describe("settings, usage, export and import", () => {
     await c.json("/api/tasks", { method: "POST", body: { title: "Backup me" } });
     await c.json("/api/memories", { method: "POST", body: { content: "Likes hiking in autumn" } });
     const res = await c.call("/api/export");
-    expect(res.headers.get("content-disposition")).toContain("talorys-backup.json");
+    expect(res.headers.get("content-disposition")).toContain("emo-backup.json");
     const text = await res.text();
     expect(text).not.toMatch(/pbkdf2|tal_sessions|session_secret|password_override/i);
     const backup = JSON.parse(text);
-    expect(backup).toMatchObject({ format: "talorys-backup", version: 1 });
+    expect(backup).toMatchObject({ format: "emo-backup", version: 1 });
 
     // Wipe a task, then import twice: restored once, no duplicates.
     const task = backup.data.tasks.find((t: any) => t.title === "Backup me");

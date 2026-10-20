@@ -25,7 +25,7 @@ function pendingCreate(c: Client, name: string) {
   const response = (exports as unknown as { default: Fetcher }).default.fetch(
     new Request(`${BASE}/api/remote/tokens`, {
       method: "POST",
-      headers: { "cf-connecting-ip": c.ip, "x-talorys-request": "1", origin: BASE, "content-type": "application/json", cookie: c.cookie! },
+      headers: { "cf-connecting-ip": c.ip, "x-emo-request": "1", origin: BASE, "content-type": "application/json", cookie: c.cookie! },
       body: stream.readable,
     }),
   );

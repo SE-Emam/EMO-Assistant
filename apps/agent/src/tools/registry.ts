@@ -1,4 +1,4 @@
-import type { PendingAction } from "@talorys/shared";
+import type { PendingAction } from "@emo/shared";
 import { AppError, NotFoundError } from "../api/errors";
 import type { z } from "zod";
 import type { Services } from "../services/container";

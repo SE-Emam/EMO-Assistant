@@ -18,7 +18,7 @@ import type { Services } from "../src/services/container";
 import type { SemanticContext } from "../src/semantic/recall";
 import { semanticTools } from "../src/semantic/tools";
 import { ToolExecutor } from "../src/tools";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 function reset(s: Services) {
   dropSemanticData(s.db);
@@ -355,7 +355,7 @@ const vectorIds = (s: Services) =>
   s.db.all<{ memory_id: string }>(`SELECT memory_id FROM tal_semantic_vectors ORDER BY memory_id`).map((r) => r.memory_id);
 
 /** Enables the feature, saves memories and embeds them directly, bypassing on-save hooks. */
-async function seeded(a: TalorysAgent, contents: string[]) {
+async function seeded(a: EmoAgent, contents: string[]) {
   const s = a.services;
   resetAll(s);
   const config = writeSemanticConfig(s.settings, { enabled: true, maxEmbeddingsPerDay: 10_000 }, s.db);

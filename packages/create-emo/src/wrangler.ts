@@ -21,9 +21,9 @@ export interface PagesProject {
   domains: string[];
 }
 
-/** Locates the Wrangler CLI shipped as a dependency of create-talorys. */
+/** Locates the Wrangler CLI shipped as a dependency of create-emo. */
 export function resolveWranglerBin(): string {
-  if (process.env.TALORYS_WRANGLER_BIN) return process.env.TALORYS_WRANGLER_BIN;
+  if (process.env.EMO_WRANGLER_BIN) return process.env.EMO_WRANGLER_BIN;
   const require = createRequire(import.meta.url);
   const pkgPath = require.resolve("wrangler/package.json");
   const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { bin: string | Record<string, string> };
@@ -90,7 +90,7 @@ export class Wrangler {
 
   async version(): Promise<string> {
     const r = await this.run(["--version"], { timeoutMs: 60_000 });
-    if (r.code !== 0) throw new CliError("The bundled Wrangler CLI could not start.", "Reinstall with `npx create-talorys@latest`.", sanitize(r.stderr, 3));
+    if (r.code !== 0) throw new CliError("The bundled Wrangler CLI could not start.", "Reinstall with `npx create-emo@latest`.", sanitize(r.stderr, 3));
     return r.stdout.trim().split("\n").pop()!.trim();
   }
 
@@ -165,7 +165,7 @@ export class Wrangler {
   async deployPages(cwd: string, projectName: string, outputDir: string): Promise<{ deploymentUrl: string | null }> {
     const r = await this.runOk(
       "Deploying Cloudflare Pages",
-      ["pages", "deploy", outputDir, "--project-name", projectName, "--branch", "main", "--commit-dirty=true", "--commit-message", "Talorys deploy"],
+      ["pages", "deploy", outputDir, "--project-name", projectName, "--branch", "main", "--commit-dirty=true", "--commit-message", "EMO deploy"],
       { cwd, timeoutMs: 10 * 60_000 },
     );
     const deploymentUrl = r.stdout.match(/https:\/\/[a-z0-9.-]+\.pages\.dev/i)?.[0] ?? null;

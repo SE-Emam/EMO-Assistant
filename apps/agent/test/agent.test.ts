@@ -163,9 +163,22 @@ describe("prompt-injection and destructive-action defenses", () => {
     });
   });
 
+  it("identifies itself as EMO and answers in the owner's language", () => {
+    const prompt = buildSystemPrompt({
+      timezone: "UTC",
+      now: new Date(),
+      autoMemory: false,
+      memories: [],
+    });
+    expect(prompt).toContain("You are EMO (إيمو)");
+    expect(prompt).toContain("Imam Abdulaziz");
+    expect(prompt).toContain("named EMO only");
+    expect(prompt).toMatch(/answer in the language the owner writes in/i);
+    expect(prompt).toMatch(/Arabic when they write Arabic, English when they write English/i);
+  });
+
   it("marks stored content as data, not instructions, in the system prompt", () => {
     const prompt = buildSystemPrompt({
-      agentName: "Talorys",
       timezone: "UTC",
       now: new Date(),
       autoMemory: false,
@@ -194,6 +207,7 @@ describe("AI failure handling", () => {
   it("maps Workers AI quota and capacity errors to friendly codes", () => {
     expect(classifyAiError(new Error("AiError: 4006: you have used up your daily free allocation of 10,000 neurons")).code).toBe("AI_QUOTA_EXHAUSTED");
     expect(classifyAiError(new Error("3040: Capacity temporarily exceeded")).code).toBe("AI_UNAVAILABLE");
+    expect(classifyAiError(new Error('{"code":"email_verification_required"}'), "TokenHarbor").message).toContain("verify your email");
   });
 
   it("persists the failure, keeps data intact and never claims success", async () => {

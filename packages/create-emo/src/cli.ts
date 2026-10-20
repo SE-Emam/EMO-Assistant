@@ -11,26 +11,26 @@ import { ClackUi } from "./ui";
 import { runChecks } from "./verify";
 import { Wrangler } from "./wrangler";
 
-const HELP = `create-talorys — deploy Talorys, your personal AI agent, to your own Cloudflare account.
+const HELP = `create-emo — deploy EMO, your personal AI agent, to your own Cloudflare account.
 
 Usage
-  npx create-talorys@latest [directory]     Install (or safely resume an interrupted install)
-  npx create-talorys@latest update          Update an existing installation, keeping all data
-  npx create-talorys@latest status          Show deployment status and health
-  npx create-talorys@latest doctor          Diagnose common problems
-  npx create-talorys@latest reset-password  Set a new owner password (signs out all devices)
+  npx create-emo@latest [directory]     Install (or safely resume an interrupted install)
+  npx create-emo@latest update          Update an existing installation, keeping all data
+  npx create-emo@latest status          Show deployment status and health
+  npx create-emo@latest doctor          Diagnose common problems
+  npx create-emo@latest reset-password  Set a new owner password (signs out all devices)
 
 Options
-  --dir <path>          Installation directory (default: ./talorys, or the current directory if it is one)
+  --dir <path>          Installation directory (default: ./emo, or the current directory if it is one)
   --account-id <id>     Cloudflare account to use
-  --name <name>         Agent name (default: Talorys)
+  --name <name>         Agent name (default: EMO)
   --semantic / --no-semantic  Turn semantic recall on or off without asking (default No; update keeps the last answer)
   -y, --yes             Skip confirmation prompts
   -h, --help            Show this help
   -v, --version         Show version
 
 Environment
-  TALORYS_OWNER_PASSWORD   Owner password for non-interactive installs (never logged)
+  EMO_OWNER_PASSWORD   Owner password for non-interactive installs (never logged)
   CLOUDFLARE_API_TOKEN     Use an API token instead of browser login
 `;
 
@@ -39,13 +39,13 @@ const COMMANDS = new Set(["install", "update", "status", "doctor", "reset-passwo
 function defaultDir(positional?: string): string {
   if (positional) return resolve(positional);
   if (existsSync(join(process.cwd(), MANIFEST_FILE))) return process.cwd();
-  return resolve("talorys");
+  return resolve("emo");
 }
 
 async function status(dir: string, deps: Deps): Promise<number> {
   const manifest = readManifest(dir);
-  if (!manifest) throw new CliError(`No Talorys installation found in ${dir}.`, "Run `npx create-talorys@latest` to install.");
-  deps.ui.intro("◆ Talorys status");
+  if (!manifest) throw new CliError(`No EMO installation found in ${dir}.`, "Run `npx create-emo@latest` to install.");
+  deps.ui.intro("◆ EMO status");
   deps.ui.note(
     [
       `Installation   ${manifest.installation_id}`,
@@ -60,13 +60,13 @@ async function status(dir: string, deps: Deps): Promise<number> {
   if (!manifest.public_url) return 1;
   const checks = await deps.ui.step("Checking health", () => runChecks(manifest.public_url!, fetch));
   deps.ui.note(formatChecks(checks), "Health");
-  deps.ui.outro(checks.every((c) => c.ok) ? "Healthy." : "Unhealthy — try `npx create-talorys@latest doctor`.");
+  deps.ui.outro(checks.every((c) => c.ok) ? "Healthy." : "Unhealthy — try `npx create-emo@latest doctor`.");
   return checks.every((c) => c.ok) ? 0 : 1;
 }
 
 async function doctor(dir: string, deps: Deps): Promise<number> {
   const { ui, wrangler } = deps;
-  ui.intro("◆ Talorys doctor");
+  ui.intro("◆ EMO doctor");
   const problems: string[] = [];
   try {
     checkNodeVersion();
@@ -84,7 +84,7 @@ async function doctor(dir: string, deps: Deps): Promise<number> {
   for (const g of await detectGlobalClis()) ui.info(`Global ${g.name} ${g.version ?? ""} (not required)`);
   const manifest = readManifest(dir);
   if (!manifest) {
-    ui.warn(`No ${MANIFEST_FILE} in ${dir}. Run this inside your Talorys directory.`);
+    ui.warn(`No ${MANIFEST_FILE} in ${dir}. Run this inside your EMO directory.`);
     ui.outro(problems.length ? "Problems found." : "Environment OK.");
     return problems.length ? 1 : 0;
   }
@@ -105,7 +105,7 @@ async function doctor(dir: string, deps: Deps): Promise<number> {
         ui.error(problems.at(-1)!);
       } else ui.success("Owner secrets configured");
       // Optional, so not a problem: the app works without push.
-      if (PUSH_SECRETS.some((s) => !secrets.includes(s))) ui.warn("Push notification keys are not set — run `npx create-talorys@latest update` to add them.");
+      if (PUSH_SECRETS.some((s) => !secrets.includes(s))) ui.warn("Push notification keys are not set — run `npx create-emo@latest update` to add them.");
     } else {
       problems.push(`Worker ${manifest.worker_name} not found — re-run the installer to deploy it.`);
       ui.error(problems.at(-1)!);
@@ -122,7 +122,7 @@ async function doctor(dir: string, deps: Deps): Promise<number> {
     for (const c of checks) (c.ok ? ui.success : ui.error).call(ui, `${c.name}: ${c.detail}`);
     if (!checks.every((c) => c.ok)) problems.push("Health checks failed.");
   }
-  ui.outro(problems.length ? `${problems.length} problem(s) found. Re-running \`npx create-talorys@latest\` in this directory fixes most of them safely.` : "Everything looks good.");
+  ui.outro(problems.length ? `${problems.length} problem(s) found. Re-running \`npx create-emo@latest\` in this directory fixes most of them safely.` : "Everything looks good.");
   return problems.length ? 1 : 0;
 }
 
@@ -161,7 +161,7 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
 
   const ui = new ClackUi();
   const deps: Deps = { ui, wrangler: new Wrangler() };
-  const password = process.env.TALORYS_OWNER_PASSWORD;
+  const password = process.env.EMO_OWNER_PASSWORD;
 
   try {
     if (values.semantic && values["no-semantic"]) throw new CliError("Pass either --semantic or --no-semantic, not both.");
@@ -200,7 +200,7 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
   return 0;
 }
 
-const isDirectRun = process.argv[1] && /create-talorys|cli\.(js|ts)$/.test(process.argv[1]);
+const isDirectRun = process.argv[1] && /create-emo|cli\.(js|ts)$/.test(process.argv[1]);
 if (isDirectRun && !process.env.VITEST) {
   main().then(
     (code) => process.exit(code),

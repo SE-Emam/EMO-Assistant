@@ -10,10 +10,10 @@ import { type SemanticContext, hybridSearch } from "../src/semantic/recall";
 import { itemUsageToday, runItemPass, startBackgroundItemBackfill } from "../src/semantic/itemIndex";
 import { taskText } from "../src/semantic/itemText";
 import { UsageService } from "../src/services/usage";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 /** Clears items and semantic state and returns an enabled context with a spied mock embedder. */
-function context(a: TalorysAgent, patch: Partial<SemanticConfig> = {}) {
+function context(a: EmoAgent, patch: Partial<SemanticConfig> = {}) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);
@@ -27,16 +27,16 @@ function context(a: TalorysAgent, patch: Partial<SemanticConfig> = {}) {
   return { ctx, embed, texts, s };
 }
 
-const parts = (a: TalorysAgent, type: ItemType, id: string) =>
+const parts = (a: EmoAgent, type: ItemType, id: string) =>
   a.services.db
     .all<{ part: number }>(`SELECT part FROM tal_semantic_item_vectors WHERE item_type = ? AND item_id = ? ORDER BY part`, type, id)
     .map((r) => r.part);
 
-const reminder = (a: TalorysAgent, name: string) =>
+const reminder = (a: EmoAgent, name: string) =>
   a.services.automationsRepo.create({ name, kind: "reminder", message: name, schedule: { type: "daily", time: "08:00" }, enabled: true });
 
 /** A scheduler-style run: only run fields and updated_at change. */
-const recordRun = (a: TalorysAgent, id: string, n: number) =>
+const recordRun = (a: EmoAgent, id: string, n: number) =>
   a.services.automationsRepo.update(id, { last_run: new Date().toISOString(), last_result: `run ${n}`, run_count: n });
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 5));

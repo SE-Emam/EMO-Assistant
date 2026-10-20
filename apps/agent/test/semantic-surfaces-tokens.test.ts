@@ -12,10 +12,10 @@ import { semanticTools } from "../src/semantic/tools";
 import type { ToolContext } from "../src/tools";
 import type { ImmediateTool } from "../src/tools/registry";
 import { UsageService } from "../src/services/usage";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 /** Clears items and semantic state and returns an enabled context with a mock embedder. */
-function context(a: TalorysAgent): IndexerContext {
+function context(a: EmoAgent): IndexerContext {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);

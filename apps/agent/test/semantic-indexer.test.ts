@@ -13,14 +13,14 @@ import { EMBEDDING_DIMS, MockEmbedder, contentHash, embeddingText, embeddingsTod
 import { type IndexerContext, pendingMemories, runIndexer, startBackgroundBackfill } from "../src/semantic/indexer";
 import { dropSemanticData, semanticTableNames } from "../src/semantic/migrations";
 import { UsageService } from "../src/services/usage";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import { type Services, createServices } from "../src/services/container";
 import { env } from "cloudflare:workers";
 import type { Env } from "../src/env";
 import type { Scheduler } from "../src/agent/scheduling";
 
 /** Clears semantic state and returns an enabled context with a spied mock embedder. */
-function context(a: TalorysAgent, patch: Partial<SemanticConfig> = {}) {
+function context(a: EmoAgent, patch: Partial<SemanticConfig> = {}) {
   const { db, settings } = a.services;
   dropSemanticData(db);
   deleteSemanticConfig(settings);
@@ -31,7 +31,7 @@ function context(a: TalorysAgent, patch: Partial<SemanticConfig> = {}) {
   return { ctx, embed, embedder };
 }
 
-const vectorRow = (a: TalorysAgent, id: string) =>
+const vectorRow = (a: EmoAgent, id: string) =>
   a.services.db.one<{ content_hash: string; model: string; dims: number; vector: ArrayBuffer }>(
     `SELECT content_hash, model, dims, vector FROM tal_semantic_vectors WHERE memory_id = ?`,
     id,
@@ -373,7 +373,7 @@ describe("semantic on-save indexing", () => {
   });
 });
 
-const withVar = (value?: string) => ({ ...(env as unknown as Env), TALORYS_SEMANTIC_DEFAULT: value }) as Env;
+const withVar = (value?: string) => ({ ...(env as unknown as Env), EMO_SEMANTIC_DEFAULT: value }) as Env;
 
 describe("installer semantic default seed", () => {
   beforeEach(async () => {

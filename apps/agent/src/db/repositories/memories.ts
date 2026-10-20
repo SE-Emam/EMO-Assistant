@@ -1,4 +1,4 @@
-import type { Memory, MemoryCategory, MemoryStatus } from "@talorys/shared";
+import type { Memory, MemoryCategory, MemoryStatus } from "@emo/shared";
 import { type Database, ftsQuery, likePattern, newId, now } from "../database";
 import { NotFoundError } from "../../api/errors";
 import { stripUndefined } from "./tasks";

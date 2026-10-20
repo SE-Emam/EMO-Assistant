@@ -18,10 +18,10 @@ import {
   scanItemVectors,
   taskAdditions,
 } from "../src/semantic/itemSearch";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 /** Clears items and semantic state and returns an enabled context searched with the fixture embedder. */
-function setup(a: TalorysAgent) {
+function setup(a: EmoAgent) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);
@@ -31,7 +31,7 @@ function setup(a: TalorysAgent) {
   return { s, sem };
 }
 
-const reminder = (a: TalorysAgent, name: string, enabled = true) =>
+const reminder = (a: EmoAgent, name: string, enabled = true) =>
   a.services.automationsRepo.create({ name, kind: "reminder", message: name, schedule: { type: "daily", time: "08:00" }, enabled });
 
 /** A paragraph of about 1,100 characters that only `phrase` gives a fixture key. */

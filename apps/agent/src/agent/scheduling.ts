@@ -1,4 +1,4 @@
-import { type Automation, type AutomationKind, type AutomationRun, type ScheduleSpec, computeNextRun, scheduleSpecSchema } from "@talorys/shared";
+import { type Automation, type AutomationKind, type AutomationRun, type ScheduleSpec, computeNextRun, scheduleSpecSchema } from "@emo/shared";
 import type { AutomationRepository } from "../db/repositories/automations";
 import type { SettingsService } from "../services/settings";
 import type { ActivityLog } from "../services/usage";

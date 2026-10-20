@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Memory } from "@talorys/shared";
+import type { Memory } from "@emo/shared";
 import { aiDismisses, classifyRelationship, clefRequest, decide, decideAi, parseClefAnswers } from "../src/memory/conflict";
 import { hasHistoricalIntent } from "../src/memory/intent";
 import { extractStatedDate } from "../src/memory/lifecycle";
@@ -139,7 +139,6 @@ describe("temporal labels", () => {
     const vw = mem("I own a Volkswagen.", { status: "historical", superseded_by: tesla.id });
     const lookup = (id: string) => (id === tesla.id ? tesla : null);
     const prompt = buildSystemPrompt({
-      agentName: "Talorys",
       timezone: "UTC",
       now: new Date(),
       autoMemory: true,

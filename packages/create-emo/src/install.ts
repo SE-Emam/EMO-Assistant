@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { DEFAULT_MODEL } from "@talorys/shared/constants";
+import { DEFAULT_MODEL } from "@emo/shared/constants";
 import { CliError } from "./errors";
 import { COMPATIBILITY_DATE, detectTimezone, generateInstallationId, type ResourceNames, resourceNames } from "./config";
 import { type Manifest, markStep, readManifest, writeManifest } from "./manifest";
@@ -17,7 +17,7 @@ export interface InstallOptions {
   yes?: boolean;
   accountId?: string;
   agentName?: string;
-  /** Non-interactive password (TALORYS_OWNER_PASSWORD). Never logged. */
+  /** Non-interactive password (EMO_OWNER_PASSWORD). Never logged. */
   password?: string;
   /** `--semantic` / `--no-semantic`; unset asks interactively (default No). */
   semantic?: boolean;
@@ -96,11 +96,11 @@ export async function allocateNames(wrangler: Wrangler, attempts = 5, nextId: ()
 async function askPassword(ui: Ui, provided?: string): Promise<string> {
   if (provided !== undefined) {
     const problem = validatePassword(provided);
-    if (problem) throw new CliError(`TALORYS_OWNER_PASSWORD is too weak: ${problem}`);
+    if (problem) throw new CliError(`EMO_OWNER_PASSWORD is too weak: ${problem}`);
     return provided;
   }
   if (!ui.interactive) {
-    throw new CliError("An owner password is required.", "Run interactively, or provide it via the TALORYS_OWNER_PASSWORD environment variable.");
+    throw new CliError("An owner password is required.", "Run interactively, or provide it via the EMO_OWNER_PASSWORD environment variable.");
   }
   for (;;) {
     const password = await ui.password("Set your owner password", validatePassword);
@@ -146,12 +146,12 @@ export async function install(opts: InstallOptions, deps: Deps): Promise<Manifes
   const dir = resolve(opts.dir);
   const templates = deps.templates ?? templatesDir();
 
-  ui.intro("◆ Welcome to Talorys", "Your personal AI agent, powered by your Cloudflare account.");
+  ui.intro("◆ Welcome to EMO", "Your personal AI agent, powered by your Cloudflare account.");
 
   const template = await ui.step("Checking system requirements", async () => {
     checkNodeVersion();
     return readTemplateInfo(templates);
-  }, (t) => `System requirements OK (Node ${process.versions.node}, Talorys ${t.version})`);
+  }, (t) => `System requirements OK (Node ${process.versions.node}, EMO ${t.version})`);
 
   await ui.step("Detecting Cloudflare CLI", async () => {
     const [bundled, global] = await Promise.all([wrangler.version(), detectGlobalClis(deps.exec)]);
@@ -163,7 +163,7 @@ export async function install(opts: InstallOptions, deps: Deps): Promise<Manifes
   const target = assertSafeTarget(dir);
   let manifest = target === "existing" ? readManifest(dir) : null;
   if (opts.mode === "update" && !manifest) {
-    throw new CliError(`No Talorys installation found in ${dir}.`, "Run this inside your Talorys directory, or pass --dir.");
+    throw new CliError(`No EMO installation found in ${dir}.`, "Run this inside your EMO directory, or pass --dir.");
   }
   if (manifest) ui.info(`Found installation ${manifest.installation_id} — ${opts.mode === "update" ? "updating" : "resuming"} safely. Existing data is never deleted.`);
 
@@ -174,10 +174,10 @@ export async function install(opts: InstallOptions, deps: Deps): Promise<Manifes
     opts.agentName ??
     (ui.interactive && !opts.yes
       ? await ui.text("Choose your agent name", {
-          initial: "Talorys",
+          initial: "EMO",
           validate: (v) => (v.trim().length > 0 && v.trim().length <= 60 ? undefined : "1–60 characters"),
         })
-      : "Talorys");
+      : "EMO");
 
   // A flag always decides; otherwise resumed installs and updates keep the recorded answer.
   const semanticDefault =
@@ -304,8 +304,8 @@ export async function install(opts: InstallOptions, deps: Deps): Promise<Manifes
 
     const checks = await ui.step(
       "Checking deployment health",
-      // TALORYS_TEST_VERIFY_ORIGIN exists only for the packaged-CLI test, which cannot reach a real pages.dev site.
-      (update) => verifyDeployment(process.env.TALORYS_TEST_VERIFY_ORIGIN ?? publicUrl, { fetch: deps.fetch, timeoutMs: opts.verifyTimeoutMs, onWait: update }),
+      // EMO_TEST_VERIFY_ORIGIN exists only for the packaged-CLI test, which cannot reach a real pages.dev site.
+      (update) => verifyDeployment(process.env.EMO_TEST_VERIFY_ORIGIN ?? publicUrl, { fetch: deps.fetch, timeoutMs: opts.verifyTimeoutMs, onWait: update }),
       (c) => (c.every((x) => x.ok) ? "Frontend and backend connected; deployment healthy" : "Health checks did not pass"),
     );
     if (!checks.every((c) => c.ok)) {
@@ -336,7 +336,7 @@ export async function install(opts: InstallOptions, deps: Deps): Promise<Manifes
       "",
       `Project directory: ${dir}`,
     ].join("\n"),
-    "Talorys is ready",
+    "EMO is ready",
   );
   ui.outro("Open your agent and start chatting.");
   return manifest;
@@ -348,13 +348,13 @@ export async function resetPassword(opts: { dir: string; password?: string }, de
   const { ui, wrangler } = deps;
   const dir = resolve(opts.dir);
   const manifest = existsSync(dir) ? readManifest(dir) : null;
-  if (!manifest) throw new CliError(`No Talorys installation found in ${dir}.`, "Run this inside your Talorys directory, or pass --dir.");
-  ui.intro("◆ Reset Talorys owner password");
+  if (!manifest) throw new CliError(`No EMO installation found in ${dir}.`, "Run this inside your EMO directory, or pass --dir.");
+  ui.intro("◆ Reset EMO owner password");
   const who = await ensureAuthenticated(deps);
   const account = await chooseAccount(ui, who.accounts, manifest.account_id);
   wrangler.accountId = account.id;
   if (!(await wrangler.workerExists(manifest.worker_name))) {
-    throw new CliError(`The Worker ${manifest.worker_name} was not found in ${account.name}.`, "Run `npx create-talorys@latest` to finish installation.");
+    throw new CliError(`The Worker ${manifest.worker_name} was not found in ${account.name}.`, "Run `npx create-emo@latest` to finish installation.");
   }
   const password = await askPassword(ui, opts.password);
   await ui.step("Updating owner password", async () => {

@@ -17,7 +17,7 @@ function streamedLogin(chunks: number) {
   const request = new Request(`${BASE}/api/auth/login`, {
     method: "POST",
     body,
-    headers: { "cf-connecting-ip": freshIp(), "x-talorys-request": "1", origin: BASE, "content-type": "application/json" },
+    headers: { "cf-connecting-ip": freshIp(), "x-emo-request": "1", origin: BASE, "content-type": "application/json" },
     // @ts-expect-error duplex is required for a streamed request body but missing from the Request types.
     duplex: "half",
   });
@@ -48,7 +48,7 @@ describe("request body limits", () => {
       new Request(`${BASE}/api/auth/login`, {
         method: "POST",
         body,
-        headers: { "cf-connecting-ip": freshIp(), "x-talorys-request": "1", origin: BASE, "content-type": "application/json" },
+        headers: { "cf-connecting-ip": freshIp(), "x-emo-request": "1", origin: BASE, "content-type": "application/json" },
         // @ts-expect-error duplex is required for a streamed request body but missing from the Request types.
         duplex: "half",
       }),

@@ -7,7 +7,7 @@ export default defineConfig({
   target: "node20",
   clean: true,
   // Shared code (password policy and hashing) is bundled; runtime deps stay external.
-  noExternal: ["@talorys/shared"],
+  noExternal: ["@emo/shared"],
   external: ["@clack/prompts", "wrangler"],
   banner: { js: "#!/usr/bin/env node" },
 });

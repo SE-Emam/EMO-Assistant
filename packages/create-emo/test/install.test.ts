@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { verifyPassword } from "@talorys/shared/crypto";
+import { verifyPassword } from "@emo/shared/crypto";
 import { allocateNames, install, resetPassword } from "../src/install";
 import { readManifest } from "../src/manifest";
 import { CliError } from "../src/errors";
@@ -24,7 +24,7 @@ describe("installer: fresh installation", () => {
     const state = sb.state();
     const worker = state.workers.acc1![manifest.worker_name]!;
     expect(worker.workers_dev).toBe(false);
-    expect(worker.migrations).toEqual([{ tag: "v1", new_sqlite_classes: ["TalorysAgent"] }]);
+    expect(worker.migrations).toEqual([{ tag: "v1", new_sqlite_classes: ["EmoAgent"] }]);
     expect(Object.keys(worker.secrets).sort()).toEqual(["OWNER_PASSWORD_HASH", "SESSION_SECRET", "VAPID_PRIVATE_KEY", "VAPID_PUBLIC_KEY"]);
     expect(worker.secrets.VAPID_PUBLIC_KEY!.length).toBe(87);
     expect(worker.secrets.OWNER_PASSWORD_HASH!.prefix).toBe("pbkdf2-sha256$");
@@ -32,7 +32,7 @@ describe("installer: fresh installation", () => {
     // URL comes from Cloudflare (note the suffix the fake account assigned), not from the project name.
     expect(manifest.public_url).toBe(`https://${manifest.pages_project_name}-x7.pages.dev`);
     expect(manifest.status).toBe("deployed");
-    expect(manifest.worker_name).toMatch(/^talorys-[a-z0-9]{8}-agent$/);
+    expect(manifest.worker_name).toMatch(/^emo-[a-z0-9]{8}-agent$/);
     expect(manifest.pages_project_name).toBe(manifest.worker_name.replace(/-agent$/, "-web"));
 
     // Worker is deployed before Pages, and secrets before verification.
@@ -44,13 +44,13 @@ describe("installer: fresh installation", () => {
     const pagesCfg = readFileSync(join(sb.dir, "web/wrangler.jsonc"), "utf8");
     expect(pagesCfg).toContain(`"service": "${manifest.worker_name}"`);
     expect(pagesCfg).toContain(`"binding": "AGENT"`);
-    expect(ui.log.some((l) => l.includes("Talorys is ready"))).toBe(true);
+    expect(ui.log.some((l) => l.includes("EMO is ready"))).toBe(true);
   });
 
   it("never writes secrets or the password to disk", async () => {
     const sb = makeSandbox();
     await install({ dir: sb.dir, ...FAST }, { ui: new ScriptedUi(freshAnswers()), wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates });
-    for (const f of ["talorys.json", "agent/wrangler.jsonc", "web/wrangler.jsonc", "README.md"]) {
+    for (const f of ["emo.json", "agent/wrangler.jsonc", "web/wrangler.jsonc", "README.md"]) {
       const text = readFileSync(join(sb.dir, f), "utf8");
       expect(text).not.toContain(STRONG_PASSWORD);
       expect(text).not.toMatch(/pbkdf2-sha256\$/);
@@ -96,7 +96,7 @@ describe("installer: fresh installation", () => {
     writeFileSync(join(sb.dir, "notes.txt"), "mine");
     await expect(
       install({ dir: sb.dir, ...FAST }, { ui: new ScriptedUi(freshAnswers()), wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates }),
-    ).rejects.toThrow(/not a Talorys installation/);
+    ).rejects.toThrow(/not a EMO installation/);
     expect(readFileSync(join(sb.dir, "notes.txt"), "utf8")).toBe("mine");
   });
 
@@ -185,8 +185,8 @@ describe("installer: idempotency and recovery", () => {
   it("avoids resource names that already exist in the account", async () => {
     const sb = makeSandbox();
     sb.update((s) => {
-      s.pages.acc1 = { "talorys-aaaaaaaa-web": { subdomain: "talorys-aaaaaaaa-web.pages.dev", deployments: 1 } };
-      s.workers.acc1 = { "talorys-bbbbbbbb-agent": { secrets: {}, migrations: [], workers_dev: true, vars: {}, deploys: 1, durableObjectData: "someone-else" } };
+      s.pages.acc1 = { "emo-aaaaaaaa-web": { subdomain: "emo-aaaaaaaa-web.pages.dev", deployments: 1 } };
+      s.workers.acc1 = { "emo-bbbbbbbb-agent": { secrets: {}, migrations: [], workers_dev: true, vars: {}, deploys: 1, durableObjectData: "someone-else" } };
     });
     const ids = ["aaaaaaaa", "bbbbbbbb", "cccccccc"];
     const names = await allocateNames(sb.wrangler(), 5, () => ids.shift()!);
@@ -203,7 +203,7 @@ describe("installer: upgrades and password reset", () => {
     const updated = await install({ dir: sb.dir, mode: "update", yes: true, ...FAST }, { ui: new ScriptedUi([]), wrangler: sb.wrangler(), fetch: fakeSite(), templates: v2 });
     const worker = sb.state().workers.acc1![first.worker_name]!;
     expect(updated.deployment_version).toBe("0.2.0");
-    expect(worker.vars.TALORYS_DEPLOYED_VERSION).toBe("0.2.0");
+    expect(worker.vars.EMO_DEPLOYED_VERSION).toBe("0.2.0");
     expect(worker.deploys).toBe(2);
     expect(worker.secrets).toEqual(secretsBefore);
     expect(worker.durableObjectData).toBe("owner-data");
@@ -232,7 +232,7 @@ describe("installer: upgrades and password reset", () => {
     const sb = makeSandbox();
     await expect(
       install({ dir: sb.dir, mode: "update", yes: true, ...FAST }, { ui: new ScriptedUi([]), wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates }),
-    ).rejects.toThrow(/No Talorys installation/);
+    ).rejects.toThrow(/No EMO installation/);
   });
 
   it("reset-password replaces only the password hash", async () => {
@@ -243,7 +243,7 @@ describe("installer: upgrades and password reset", () => {
     const after = sb.state().workers.acc1![m.worker_name]!.secrets;
     expect(after.SESSION_SECRET).toEqual(before.SESSION_SECRET);
     expect(sb.state().calls.filter((c) => c.key === "secret bulk")).toHaveLength(2);
-    expect(existsSync(join(sb.dir, "talorys.json"))).toBe(true);
+    expect(existsSync(join(sb.dir, "emo.json"))).toBe(true);
   });
 });
 
@@ -284,7 +284,7 @@ describe("installer: semantic prompt", () => {
     expect(ui.prompts.filter((p) => SEMANTIC_PROMPT.test(p))).toHaveLength(1);
     expect(m.semantic).toBe(false);
     expect(readManifest(sb.dir)?.semantic).toBe(false);
-    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("TALORYS_SEMANTIC_DEFAULT");
+    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("EMO_SEMANTIC_DEFAULT");
     expect(ui.log.some((l) => l.includes("Semantic recall  off"))).toBe(true);
   });
 
@@ -294,7 +294,7 @@ describe("installer: semantic prompt", () => {
     const m = await install({ dir: sb.dir, ...FAST }, { ui, wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates });
     expect(ui.prompts.filter((p) => SEMANTIC_PROMPT.test(p))).toHaveLength(1);
     expect(m.semantic).toBe(true);
-    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).toContain(`"TALORYS_SEMANTIC_DEFAULT": "on"`);
+    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).toContain(`"EMO_SEMANTIC_DEFAULT": "on"`);
     expect(ui.log.some((l) => l.includes("Semantic recall  on"))).toBe(true);
   });
 });
@@ -306,7 +306,7 @@ describe("installer: semantic flags", () => {
     const m = await install({ dir: sb.dir, yes: true, password: STRONG_PASSWORD, ...FAST }, { ui, wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates });
     expect(ui.prompts).toEqual([]);
     expect(m.semantic).toBe(false);
-    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("TALORYS_SEMANTIC_DEFAULT");
+    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("EMO_SEMANTIC_DEFAULT");
   });
 
   it("-y --semantic turns it on without asking", async () => {
@@ -315,7 +315,7 @@ describe("installer: semantic flags", () => {
     const m = await install({ dir: sb.dir, yes: true, semantic: true, password: STRONG_PASSWORD, ...FAST }, { ui, wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates });
     expect(ui.prompts).toEqual([]);
     expect(m.semantic).toBe(true);
-    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).toContain(`"TALORYS_SEMANTIC_DEFAULT": "on"`);
+    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).toContain(`"EMO_SEMANTIC_DEFAULT": "on"`);
   });
 
   it("--no-semantic skips the interactive question", async () => {
@@ -335,7 +335,7 @@ describe("installer: semantic update", () => {
     const m = await install({ dir: sb.dir, mode: "update", ...FAST }, { ui, wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates });
     expect(ui.prompts).toEqual(["Confirm update?"]);
     expect(m.semantic).toBe(true);
-    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).toContain(`"TALORYS_SEMANTIC_DEFAULT": "on"`);
+    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).toContain(`"EMO_SEMANTIC_DEFAULT": "on"`);
   });
 
   it("lets a flag on update replace the recorded value", async () => {
@@ -346,19 +346,19 @@ describe("installer: semantic update", () => {
     expect(ui.prompts).toEqual(["Confirm update?"]);
     expect(m.semantic).toBe(false);
     expect(readManifest(sb.dir)?.semantic).toBe(false);
-    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("TALORYS_SEMANTIC_DEFAULT");
+    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("EMO_SEMANTIC_DEFAULT");
   });
 
   it("treats an older manifest without the field as off and does not ask", async () => {
     const sb = makeSandbox();
     await install({ dir: sb.dir, yes: true, password: STRONG_PASSWORD, ...FAST }, { ui: new ScriptedUi([], false), wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates });
-    const path = join(sb.dir, "talorys.json");
+    const path = join(sb.dir, "emo.json");
     const { semantic: _, ...older } = JSON.parse(readFileSync(path, "utf8"));
     writeFileSync(path, JSON.stringify(older));
     const ui = new ScriptedUi([true]);
     await install({ dir: sb.dir, mode: "update", ...FAST }, { ui, wrangler: sb.wrangler(), fetch: fakeSite(), templates: sb.templates });
     expect(ui.prompts).toEqual(["Confirm update?"]);
-    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("TALORYS_SEMANTIC_DEFAULT");
+    expect(readFileSync(join(sb.dir, "agent/wrangler.jsonc"), "utf8")).not.toContain("EMO_SEMANTIC_DEFAULT");
   });
 });
 
@@ -381,6 +381,6 @@ describe("installer: semantic compatibility", () => {
   it("rejects --semantic together with --no-semantic", async () => {
     const sb = makeSandbox();
     expect(await main(["--semantic", "--no-semantic", "--dir", sb.dir, "-y"])).toBe(1);
-    expect(existsSync(join(sb.dir, "talorys.json"))).toBe(false);
+    expect(existsSync(join(sb.dir, "emo.json"))).toBe(false);
   });
 });

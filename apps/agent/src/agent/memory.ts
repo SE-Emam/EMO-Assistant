@@ -1,4 +1,4 @@
-import type { ChatMessage, Limits, Memory } from "@talorys/shared";
+import type { ChatMessage, Limits, Memory } from "@emo/shared";
 import type { MemoryRepository } from "../db/repositories/memories";
 import { estimateTokens, type ModelMessage } from "../ai/provider";
 import { hasHistoricalIntent } from "../memory/intent";

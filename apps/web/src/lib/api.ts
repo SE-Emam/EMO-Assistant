@@ -1,4 +1,4 @@
-import { CSRF_HEADER, type ApiErrorBody, type ApiErrorCode, type ChatStreamEvent } from "@talorys/shared";
+import { CSRF_HEADER, type ApiErrorBody, type ApiErrorCode, type ChatStreamEvent } from "@emo/shared";
 
 export class ApiError extends Error {
   constructor(
@@ -26,7 +26,7 @@ async function toApiError(res: Response): Promise<ApiError> {
     /* non-JSON error */
   }
   const code = body.error?.code ?? (res.status === 401 ? "UNAUTHORIZED" : "INTERNAL_ERROR");
-  const message = body.error?.message ?? (res.status >= 500 ? "Talorys is temporarily unavailable." : `Request failed (${res.status})`);
+  const message = body.error?.message ?? (res.status >= 500 ? "EMO is temporarily unavailable." : `Request failed (${res.status})`);
   return new ApiError(res.status, code, message, body.error?.details);
 }
 

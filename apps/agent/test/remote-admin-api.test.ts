@@ -1,4 +1,4 @@
-import { MAX_REMOTE_TOKENS } from "@talorys/shared";
+import { MAX_REMOTE_TOKENS } from "@emo/shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { client, inAgent, loggedIn } from "./helpers";
 
@@ -65,7 +65,7 @@ describe("remote access admin API", () => {
       expect((await anon.call(path, { method, body: method === "GET" ? undefined : {} })).status).toBe(401);
     }
     const c = await loggedIn();
-    const noCsrf = { headers: { "x-talorys-request": "0" } };
+    const noCsrf = { headers: { "x-emo-request": "0" } };
     expect((await c.call("/api/remote/status", { method: "PATCH", body: { enabled: true }, ...noCsrf })).status).toBe(403);
     expect((await c.json("/api/remote/status")).enabled).toBe(false);
     await c.json("/api/remote/status", { method: "PATCH", body: { enabled: true } });

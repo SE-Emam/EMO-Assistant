@@ -15,7 +15,7 @@ export function checkPasswordStrength(password: string): string | null {
     return "Mix letters with numbers or symbols, or use a passphrase of 16+ characters.";
   }
   const lowered = password.toLowerCase();
-  const common = ["password", "talorys", "qwerty", "123456", "letmein", "iloveyou", "admin"];
+  const common = ["password", "emo", "qwerty", "123456", "letmein", "iloveyou", "admin"];
   if (common.some((c) => lowered.includes(c)) && password.length < 16) {
     return "Avoid common words such as 'password'.";
   }

@@ -13,7 +13,7 @@ import {
   taskCreateSchema,
   taskListQuerySchema,
   taskUpdateSchema,
-} from "@talorys/shared";
+} from "@emo/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../app";

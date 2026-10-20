@@ -1,4 +1,4 @@
-import type { Memory, MemoryCategory, MemoryReviewAction } from "@talorys/shared";
+import type { Memory, MemoryCategory, MemoryReviewAction } from "@emo/shared";
 import { estimateTokens } from "../ai/provider";
 import { ValidationError } from "../api/errors";
 import type { Database } from "../db/database";

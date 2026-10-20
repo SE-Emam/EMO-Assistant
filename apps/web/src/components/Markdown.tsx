@@ -3,14 +3,16 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Check, Copy } from "lucide-react";
 import { cn, copyText } from "../lib/utils";
+import { useI18n } from "../lib/i18n";
 
 function CodeBlock({ children, className }: { children?: React.ReactNode; className?: string }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const text = String(children ?? "").replace(/\n$/, "");
   const lang = /language-(\w+)/.exec(className ?? "")?.[1];
   return (
     <div className="group relative">
-      <div className="absolute right-2 top-2 flex items-center gap-2">
+      <div className="absolute end-2 top-2 flex items-center gap-2">
         {lang && <span className="text-[11px] uppercase tracking-wide text-fg-subtle">{lang}</span>}
         <button type="button"
           onClick={() => {
@@ -20,12 +22,12 @@ function CodeBlock({ children, className }: { children?: React.ReactNode; classN
             });
           }}
           className="rounded-md border border-border bg-surface p-1 text-fg-subtle opacity-0 transition-opacity hover:text-fg group-hover:opacity-100 focus:opacity-100"
-          aria-label="Copy code"
+          aria-label={t("markdown.copyCode")}
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
         </button>
       </div>
-      <pre>
+      <pre dir="ltr">
         <code className={className}>{text}</code>
       </pre>
     </div>
@@ -45,15 +47,20 @@ const components: Components = {
     </a>
   ),
   // Never load remote images from model output (privacy + exfiltration defence).
-  img: ({ alt }) => <span className="text-fg-subtle">[image: {alt}]</span>,
+  img: ({ alt }) => <ImageFallback alt={alt} />,
 };
 
 /** Task list items with clickable checkboxes; `line` is the 0-based source line. */
-function taskComponents(onToggleTask: (line: number) => void): Components {
+function ImageFallback({ alt }: { alt?: string }) {
+  const { t } = useI18n();
+  return <span className="text-fg-subtle">[{t("markdown.image")}: {alt}]</span>;
+}
+
+function taskComponents(onToggleTask: (line: number) => void, t: (key: string) => string): Components {
   return {
     ...components,
     input: ({ checked, type }) =>
-      type === "checkbox" ? <input type="checkbox" checked={!!checked} readOnly aria-label={checked ? "Mark as not done" : "Mark as done"} /> : null,
+      type === "checkbox" ? <input type="checkbox" checked={!!checked} readOnly aria-label={checked ? t("markdown.markNotDone") : t("markdown.markDone")} /> : null,
     li: ({ node, className, children }) => {
       const line = (node?.position?.start.line ?? 0) - 1;
       const isTask = className?.includes("task-list-item");
@@ -74,9 +81,10 @@ function taskComponents(onToggleTask: (line: number) => void): Components {
 
 /** Safe Markdown renderer: raw HTML is not rendered (react-markdown default). */
 export const Markdown = memo(function Markdown({ content, compact, onToggleTask }: { content: string; compact?: boolean; onToggleTask?: (line: number) => void }) {
-  const comps = useMemo(() => (onToggleTask ? taskComponents(onToggleTask) : components), [onToggleTask]);
+  const { t } = useI18n();
+  const comps = useMemo(() => (onToggleTask ? taskComponents(onToggleTask, t) : components), [onToggleTask, t]);
   return (
-    <div className={cn("prose-talorys", compact && "text-sm leading-6")}>
+    <div dir="auto" className={cn("prose-emo", compact && "text-sm leading-6")}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={comps} skipHtml>
         {content}
       </ReactMarkdown>

@@ -1,4 +1,4 @@
-import type { Automation } from "@talorys/shared";
+import type { Automation } from "@emo/shared";
 import { ALL_TOOLS, type ToolContext, type ToolDefinition } from "../tools";
 import type { ImmediateTool } from "../tools/registry";
 import { presentTask } from "../tools/tasks";

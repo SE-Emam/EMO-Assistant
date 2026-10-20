@@ -48,7 +48,8 @@ describe("password hashing", () => {
 describe("input schemas", () => {
   it("validates settings, tasks and backups", () => {
     expect(settingsSchema.shape.timezone.safeParse("Mars/Base").success).toBe(false);
-    expect(settingsSchema.shape.model.safeParse("https://evil.example/model").success).toBe(false);
+    expect(settingsSchema.shape.model.safeParse("   ").success).toBe(false);
+    expect(settingsSchema.shape.aiProvider.safeParse("not-a-provider").success).toBe(false);
     expect(taskCreateSchema.safeParse({ title: "   " }).success).toBe(false);
     expect(backupSchema.safeParse({ format: "other", version: 1, exported_at: "", data: {} }).success).toBe(false);
   });

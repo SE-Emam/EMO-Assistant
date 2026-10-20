@@ -126,7 +126,7 @@ describe("semantic embeddings", () => {
       const { settings } = a.services;
       const model = "@cf/baai/bge-small-en-v1.5";
       const ai = fakeAi(() => ({}));
-      const base = { TalorysAgent: {} } as unknown as Env;
+      const base = { EmoAgent: {} } as unknown as Env;
       const demo = settings.get().demoMode;
       settings.update({ demoMode: false });
       try {
@@ -134,8 +134,8 @@ describe("semantic embeddings", () => {
         const workers = createEmbedder({ ...base, AI: ai }, settings, model);
         expect(workers).toBeInstanceOf(WorkersAiEmbedder);
         expect(workers?.model).toBe(model);
-        expect(createEmbedder({ ...base, AI: ai, TALORYS_ENV: "development", TALORYS_MOCK_AI: "1" }, settings, model)).toBeInstanceOf(MockEmbedder);
-        expect(createEmbedder({ ...base, AI: ai, TALORYS_ENV: "production", TALORYS_MOCK_AI: "1" }, settings, model)).toBeInstanceOf(WorkersAiEmbedder);
+        expect(createEmbedder({ ...base, AI: ai, EMO_ENV: "development", EMO_MOCK_AI: "1" }, settings, model)).toBeInstanceOf(MockEmbedder);
+        expect(createEmbedder({ ...base, AI: ai, EMO_ENV: "production", EMO_MOCK_AI: "1" }, settings, model)).toBeInstanceOf(WorkersAiEmbedder);
         settings.update({ demoMode: true });
         expect(createEmbedder({ ...base, AI: ai }, settings, model)).toBeInstanceOf(MockEmbedder);
       } finally {

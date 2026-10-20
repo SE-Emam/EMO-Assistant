@@ -1,4 +1,4 @@
-import { MAX_PUSH_DEVICES, type PushDevice } from "@talorys/shared";
+import { MAX_PUSH_DEVICES, type PushDevice } from "@emo/shared";
 import { type Database, newId, now } from "../db/database";
 import { ValidationError } from "../api/errors";
 

@@ -1,4 +1,4 @@
-import { MAX_REMOTE_TOKENS } from "@talorys/shared";
+import { MAX_REMOTE_TOKENS } from "@emo/shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { inAgent } from "./helpers";
 import { AppError } from "../src/api/errors";

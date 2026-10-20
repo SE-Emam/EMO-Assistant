@@ -1,4 +1,4 @@
-import type { Memory } from "@talorys/shared";
+import type { Memory } from "@emo/shared";
 import type { ToolDefinition } from "../tools";
 
 /**

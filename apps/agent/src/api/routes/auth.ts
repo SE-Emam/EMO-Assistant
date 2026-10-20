@@ -1,4 +1,4 @@
-import { changePasswordSchema, loginSchema } from "@talorys/shared";
+import { changePasswordSchema, loginSchema } from "@emo/shared";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import { body, clientId, readSessionToken, sessionCookie } from "../middleware";

@@ -10,8 +10,8 @@ import { semanticTools } from "../src/semantic/tools";
 import { ALL_TOOLS, type ToolContext, type ToolDefinition } from "../src/tools";
 import type { ImmediateTool } from "../src/tools/registry";
 import type { Services } from "../src/services/container";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
-import type { ScheduleSpec } from "@talorys/shared";
+import type { EmoAgent } from "../src/agent/emo-agent";
+import type { ScheduleSpec } from "@emo/shared";
 
 type Entry = { id: string; title?: string; name?: string; excerpt?: string; match?: string };
 type TaskList = { count: number; tasks: Entry[] };
@@ -27,7 +27,7 @@ function reset(s: Services) {
 }
 
 /** A fresh enabled context over the agent's database, searched with the fixture embedder. */
-function setup(a: TalorysAgent) {
+function setup(a: EmoAgent) {
   const s = a.services;
   reset(s);
   const sem: SemanticContext = { db: s.db, services: s, embedder: new FixtureEmbedder(), config: fixtureConfig(), queryVectors: new Map() };

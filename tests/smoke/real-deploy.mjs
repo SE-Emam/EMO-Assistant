@@ -1,11 +1,11 @@
 // Optional end-to-end smoke test against a REAL Cloudflare account.
 //
-// Creates a new Talorys deployment with the locally built create-talorys CLI,
+// Creates a new EMO deployment with the locally built create-emo CLI,
 // then exercises it over HTTPS: login, private API, task CRUD, and (optionally)
 // one streamed chat turn through Pages Function → service binding → Worker.
 //
 // Required: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
-// Optional: TALORYS_SMOKE_AI=1 to also run one Workers AI chat turn (uses Neurons)
+// Optional: EMO_SMOKE_AI=1 to also run one Workers AI chat turn (uses Neurons)
 //
 // Resources are left in place for inspection; the script prints how to remove them.
 import { spawnSync } from "node:child_process";
@@ -23,21 +23,21 @@ if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID) {
 }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
-const cli = join(root, "packages/create-talorys/dist/cli.js");
-const work = mkdtempSync(join(tmpdir(), "talorys-smoke-"));
+const cli = join(root, "packages/create-emo/dist/cli.js");
+const work = mkdtempSync(join(tmpdir(), "emo-smoke-"));
 const password = `Smoke-${randomBytes(9).toString("base64url")}`;
 
 console.log(`• Installing into ${work}/agent`);
 const res = spawnSync(process.execPath, [cli, "--yes", "--dir", join(work, "agent"), "--account-id", CLOUDFLARE_ACCOUNT_ID, "--name", "Smoke"], {
-  env: { ...process.env, TALORYS_OWNER_PASSWORD: password },
+  env: { ...process.env, EMO_OWNER_PASSWORD: password },
   stdio: "inherit",
 });
 assert.equal(res.status, 0, "installer failed");
-const manifest = JSON.parse(readFileSync(join(work, "agent/talorys.json"), "utf8"));
+const manifest = JSON.parse(readFileSync(join(work, "agent/emo.json"), "utf8"));
 const base = manifest.public_url;
 console.log(`• Deployed at ${base}`);
 
-const H = { "x-talorys-request": "1", origin: base, "content-type": "application/json" };
+const H = { "x-emo-request": "1", origin: base, "content-type": "application/json" };
 let cookie = "";
 async function call(path, init = {}) {
   const r = await fetch(`${base}${path}`, { ...init, headers: { ...H, ...(cookie ? { cookie } : {}), ...init.headers }, redirect: "manual" });
@@ -50,14 +50,14 @@ assert.equal((await call("/api/tasks")).status, 401, "private API must reject an
 assert.equal((await call("/api/auth/login", { method: "POST", body: JSON.stringify({ password: "wrong-password-1" }) })).status, 401);
 const login = await call("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) });
 assert.equal(login.status, 200, "login failed");
-assert.match(login.headers.get("set-cookie") ?? "", /__Host-talorys_session=.*HttpOnly.*SameSite=Strict/i);
+assert.match(login.headers.get("set-cookie") ?? "", /__Host-emo_session=.*HttpOnly.*SameSite=Strict/i);
 
 const created = await (await call("/api/tasks", { method: "POST", body: JSON.stringify({ title: "Smoke test task" }) })).json();
 assert.equal(created.task.title, "Smoke test task");
 assert.equal((await call(`/api/tasks/${created.task.id}`, { method: "DELETE" })).status, 200);
 console.log("✓ Auth, private API and Durable Object storage work");
 
-if (process.env.TALORYS_SMOKE_AI === "1") {
+if (process.env.EMO_SMOKE_AI === "1") {
   const t0 = Date.now();
   const chat = await call("/api/chat", { method: "POST", body: JSON.stringify({ message: "Add a task called smoke check, then say done." }) });
   assert.equal(chat.status, 200);

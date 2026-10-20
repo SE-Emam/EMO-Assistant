@@ -53,7 +53,7 @@ export function explainWranglerFailure(action: string, stderr: string): CliError
   if (text.includes("[code: 10001]") || text.includes("permission") || text.includes("forbidden") || text.includes("unauthorized")) {
     return new CliError(
       `${action} failed: your Cloudflare login lacks a required permission.`,
-      "Talorys needs Workers Scripts:Edit, Pages:Edit, Workers AI:Read and Account Settings:Read. Ask an account admin, or choose another account.",
+      "EMO needs Workers Scripts:Edit, Pages:Edit, Workers AI:Read and Account Settings:Read. Ask an account admin, or choose another account.",
       details,
     );
   }
@@ -70,5 +70,5 @@ export function explainWranglerFailure(action: string, stderr: string): CliError
   if (text.includes("rate limit") || text.includes("[code: 971]") || text.includes("too many requests")) {
     return new CliError(`${action} failed: Cloudflare rate-limited the request.`, "Wait a minute and re-run the installer; it resumes safely.", details);
   }
-  return new CliError(`${action} failed.`, "Re-run the installer to resume. If it keeps failing, run `npx create-talorys@latest doctor`.", details);
+  return new CliError(`${action} failed.`, "Re-run the installer to resume. If it keeps failing, run `npx create-emo@latest doctor`.", details);
 }

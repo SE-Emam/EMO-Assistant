@@ -1,17 +1,17 @@
 import { env, exports } from "cloudflare:workers";
 import { getAgentByName } from "agents";
 import { runInDurableObject } from "cloudflare:test";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import type { Services } from "../src/services/container";
 import { ALL_TOOLS, ToolExecutor } from "../src/tools";
 
-/** True when the test pool runs the fake AI (TALORYS_MOCK_AI=1 in development), mirroring how the agent picks its provider. */
+/** True when the test pool runs the fake AI (EMO_MOCK_AI=1 in development), mirroring how the agent picks its provider. */
 export const fakeAi = () => {
-  const e = env as unknown as { TALORYS_ENV?: string; TALORYS_MOCK_AI?: string };
-  return e.TALORYS_ENV === "development" && e.TALORYS_MOCK_AI === "1";
+  const e = env as unknown as { EMO_ENV?: string; EMO_MOCK_AI?: string };
+  return e.EMO_ENV === "development" && e.EMO_MOCK_AI === "1";
 };
 
-export const BASE = "https://talorys.example.pages.dev";
+export const BASE = "https://emo.example.pages.dev";
 export const password = () => (env as unknown as { TEST_PASSWORD: string }).TEST_PASSWORD;
 
 let ipCounter = 1;
@@ -32,7 +32,7 @@ export function client(opts: { ip?: string; cookie?: string | null } = {}): Clie
     async call(path, init = {}) {
       const headers: Record<string, string> = {
         "cf-connecting-ip": c.ip,
-        "x-talorys-request": "1",
+        "x-emo-request": "1",
         origin: BASE,
         ...(init.body !== undefined ? { "content-type": "application/json" } : {}),
         ...(c.cookie ? { cookie: c.cookie } : {}),
@@ -61,12 +61,12 @@ export async function loggedIn(): Promise<Client> {
 }
 
 export async function agentStub() {
-  return getAgentByName((env as unknown as { TalorysAgent: DurableObjectNamespace<TalorysAgent> }).TalorysAgent, "personal-agent");
+  return getAgentByName((env as unknown as { EmoAgent: DurableObjectNamespace<EmoAgent> }).EmoAgent, "personal-agent");
 }
 
-export async function inAgent<R>(fn: (agent: TalorysAgent) => R | Promise<R>): Promise<R> {
+export async function inAgent<R>(fn: (agent: EmoAgent) => R | Promise<R>): Promise<R> {
   const stub = await agentStub();
-  return runInDurableObject(stub, async (instance: TalorysAgent) => fn(instance));
+  return runInDurableObject(stub, async (instance: EmoAgent) => fn(instance));
 }
 
 /** Parses an SSE body into events. */

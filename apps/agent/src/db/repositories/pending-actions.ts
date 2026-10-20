@@ -1,4 +1,4 @@
-import type { ChatMessage, PendingAction } from "@talorys/shared";
+import type { ChatMessage, PendingAction } from "@emo/shared";
 import { type Database, newId, now } from "../database";
 
 /** How long the owner has to approve a proposed destructive action. */

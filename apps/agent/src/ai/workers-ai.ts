@@ -43,7 +43,7 @@ export class CloudflareWorkersAIProvider implements AIProvider {
       };
     } catch (error) {
       // A call that reached the binding is metered even when it fails (docs/architecture.md).
-      throw withUsage(classifyAiError(error), steps[0] && stepUsage(this.model, steps[0], 0));
+      throw withUsage(classifyAiError(error, "Cloudflare Workers AI"), steps[0] && stepUsage(this.model, steps[0], 0));
     }
   }
 
@@ -139,6 +139,6 @@ export class CloudflareWorkersAIProvider implements AIProvider {
       yield { type: "usage", usage: stepUsage(this.model, steps[stepIndex]!, stepOutputChars) };
       stepOutputChars = 0;
     }
-    if (failure) throw classifyAiError(failure);
+    if (failure) throw classifyAiError(failure, "Cloudflare Workers AI");
   }
 }

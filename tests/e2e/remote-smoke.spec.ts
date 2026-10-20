@@ -1,9 +1,9 @@
 import { execFileSync } from "node:child_process";
 import { expect, type APIRequestContext, test } from "@playwright/test";
 
-const PASSWORD = process.env.TALORYS_DEV_PASSWORD || "talorys-dev-password";
+const PASSWORD = process.env.EMO_DEV_PASSWORD || "emo-dev-password";
 const BASE = "http://localhost:5173";
-const CSRF = { "x-talorys-request": "1", origin: BASE };
+const CSRF = { "x-emo-request": "1", origin: BASE };
 
 async function login(request: APIRequestContext) {
   const res = await request.post("/api/auth/login", { headers: CSRF, data: { password: PASSWORD } });
@@ -21,7 +21,7 @@ async function mint(request: APIRequestContext, name: string, scope: "read" | "w
 function smoke(token: string, ...flags: string[]): { status: number; output: string } {
   try {
     const output = execFileSync("node", ["scripts/remote-smoke.mjs", ...flags], {
-      env: { ...process.env, TALORYS_URL: BASE, TALORYS_TOKEN: token },
+      env: { ...process.env, EMO_URL: BASE, EMO_TOKEN: token },
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     });

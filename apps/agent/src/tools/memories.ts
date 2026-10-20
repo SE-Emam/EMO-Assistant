@@ -1,4 +1,4 @@
-import { MEMORY_CATEGORIES } from "@talorys/shared";
+import { MEMORY_CATEGORIES } from "@emo/shared";
 import { z } from "zod";
 import { defineTool, quoteTitle, ToolError } from "./registry";
 import { hasHistoricalIntent } from "../memory/intent";

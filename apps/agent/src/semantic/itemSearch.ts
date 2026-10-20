@@ -1,4 +1,4 @@
-import type { Automation, Task } from "@talorys/shared";
+import type { Automation, Task } from "@emo/shared";
 import { ftsTerms } from "../db/database";
 import { itemPassRunning, runItemPass, startBackgroundItemBackfill } from "./itemIndex";
 import { type ItemType, cachedItemVectors } from "./itemStore";

@@ -1,11 +1,11 @@
 {
-  "name": "create-talorys",
+  "name": "create-emo",
   "version": "0.1.7",
-  "description": "Deploy Talorys — your personal AI agent — into your own Cloudflare account with one command.",
+  "description": "Deploy EMO — your personal AI agent — into your own Cloudflare account with one command.",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "create-talorys": "dist/cli.js"
+    "create-emo": "dist/cli.js"
   },
   "files": [
     "dist",
@@ -27,7 +27,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rociiu/talorys.git",
-    "directory": "packages/create-talorys"
+    "directory": "packages/create-emo"
   },
   "scripts": {
     "build": "tsup && node scripts/build-templates.mjs",
@@ -41,7 +41,7 @@
     "wrangler": "4.149.0"
   },
   "devDependencies": {
-    "@talorys/shared": "*",
+    "@emo/shared": "*",
     "@types/node": "^22.0.0",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",

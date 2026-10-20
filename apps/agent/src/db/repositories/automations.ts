@@ -5,7 +5,7 @@ import {
   type Notification,
   type ScheduleSpec,
   describeSchedule,
-} from "@talorys/shared";
+} from "@emo/shared";
 import { type Database, newId, now } from "../database";
 import { NotFoundError } from "../../api/errors";
 

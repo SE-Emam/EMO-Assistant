@@ -1,4 +1,4 @@
-import type { Limits, UsageCounters } from "@talorys/shared";
+import type { Limits, UsageCounters } from "@emo/shared";
 import type { Database } from "../db/database";
 import type { Usage } from "../ai/provider";
 import { estimateConsumption } from "../ai/pricing";

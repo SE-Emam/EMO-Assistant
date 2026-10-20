@@ -6,9 +6,9 @@
 | --- | --- | --- |
 | Web app (React, Vite, Tailwind, TanStack Query, React Router) | `apps/web/src` | Cloudflare Pages (static) |
 | API proxy | `apps/web/functions/api/[[path]].ts` | Pages Function |
-| Agent Worker (Hono API + `TalorysAgent`) | `apps/agent/src` | Cloudflare Workers + Durable Objects |
+| Agent Worker (Hono API + `EmoAgent`) | `apps/agent/src` | Cloudflare Workers + Durable Objects |
 | Shared schemas, recurrence, crypto | `packages/shared` | Bundled into all of the above |
-| Installer | `packages/create-talorys` | The owner's machine (Node.js) |
+| Installer | `packages/create-emo` | The owner's machine (Node.js) |
 
 ## Request flow
 
@@ -18,17 +18,17 @@
    a service binding to the private Worker. URL, method, headers and body are
    preserved, so the Worker can validate `Origin`. Responses (including SSE
    streams) are returned without buffering.
-4. The Worker forwards `/api/*` to `getAgentByName(env.TalorysAgent, "personal-agent")`.
+4. The Worker forwards `/api/*` to `getAgentByName(env.EmoAgent, "personal-agent")`.
    The instance name is fixed server-side; clients cannot address other agents.
    WebSocket upgrades are refused (the app uses HTTP + SSE only).
-5. `TalorysAgent.onRequest` runs the Hono app next to its SQLite database.
+5. `EmoAgent.onRequest` runs the Hono app next to its SQLite database.
 
-## TalorysAgent
+## EmoAgent
 
-`apps/agent/src/agent/talorys-agent.ts` extends the Agents SDK `Agent` class.
+`apps/agent/src/agent/emo-agent.ts` extends the Agents SDK `Agent` class.
 
 - **Storage**: Durable Object SQLite via `ctx.storage.sql`, wrapped by
-  `db/database.ts` and per-entity repositories in `db/repositories/`. Talorys
+  `db/database.ts` and per-entity repositories in `db/repositories/`. EMO
   tables are prefixed `tal_` and never touch the SDK's `cf_agents_*` tables.
 - **Migrations**: `db/migrations.ts` — versioned, append-only, each applied in a
   transaction with its version bump. Run lazily on first use after every deploy.
@@ -76,12 +76,30 @@ added.
   official `workers-ai-provider`. Reasoning ("thinking") is disabled to save
   Neurons. On the final allowed step, or once the tool budget is spent,
   `toolChoice: "none"` forces a text answer.
+- `OpenAICompatibleProvider` (`ai/openai-compatible.ts`) serves every hosted
+  provider that speaks the OpenAI Chat Completions protocol: OpenAI, OpenRouter,
+  Groq, NVIDIA NIM, Gemini's compatibility endpoint, OpenCode Zen, Ollama and a
+  custom base URL. It uses `@ai-sdk/openai-compatible` with the same streaming
+  and tool loop as the Workers AI adapter.
 - `MockAIProvider` (`ai/mock.ts`) is deterministic, used for local development,
   tests and the opt-in Demo mode. It routes simple intents through the real tool
   pipeline.
 
-Adding a provider (OpenRouter, Gemini, …) means implementing `AIProvider` and
-selecting it in `TalorysAgent.aiProvider()`.
+`ai/configured.ts` builds the provider from settings. `aiProvider()` is async
+because the API key is decrypted on demand. Provider keys are entered in
+Settings → AI, stored AES-GCM-encrypted in `tal_settings` under
+`ai.providerKey`, with a key derived from `SESSION_SECRET` via HKDF-SHA256.
+They are write-only through the API (only `aiKeySet` is reported) and never
+included in backups. Without a key, or with the Workers AI binding missing,
+`aiProvider()` returns null and EMO keeps working without AI.
+
+OpenCode Zen requests carry the client headers its gateway expects
+(`User-Agent`, `x-opencode-client`, `x-opencode-project`, and a generated
+`x-opencode-session`). Free-tier access may still be restricted upstream; the
+paid Console models and an API key are the supported path.
+
+Adding another native provider means implementing `AIProvider` and returning it
+from `createConfiguredProvider()`.
 
 Usage is additive per model step, including summaries and memory
 inference. Input and output tokens each preserve provider-reported values when

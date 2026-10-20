@@ -15,7 +15,7 @@ describe("Pages Function → service binding forwarding", () => {
     };
     const req = new Request("https://me.pages.dev/api/tasks?x=1", {
       method: "POST",
-      headers: { cookie: "s=1", origin: "https://me.pages.dev", "x-talorys-request": "1" },
+      headers: { cookie: "s=1", origin: "https://me.pages.dev", "x-emo-request": "1" },
       body: JSON.stringify({ title: "t" }),
     });
     const res = await onRequest(ctx(req, agent));

@@ -15,9 +15,9 @@ const root = join(pkgDir, "..", "..");
 const out = join(pkgDir, "templates");
 const pkg = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8"));
 const constants = readFileSync(join(root, "packages/shared/src/constants.ts"), "utf8");
-const appVersion = constants.match(/TALORYS_VERSION = "([^"]+)"/)?.[1];
+const appVersion = constants.match(/EMO_VERSION = "([^"]+)"/)?.[1];
 if (appVersion !== pkg.version) {
-  throw new Error(`Version mismatch: create-talorys ${pkg.version} vs TALORYS_VERSION ${appVersion}`);
+  throw new Error(`Version mismatch: create-emo ${pkg.version} vs EMO_VERSION ${appVersion}`);
 }
 
 const run = (cmd, args, cwd = root, shell = false) =>
@@ -27,10 +27,10 @@ const npm = (args) =>
   process.env.npm_execpath ? run(process.execPath, [process.env.npm_execpath, ...args]) : run("npm", args, root, process.platform === "win32");
 
 console.log("• Building frontend");
-npm(["run", "build", "-w", "@talorys/web"]);
+npm(["run", "build", "-w", "@emo/web"]);
 
 console.log("• Bundling agent Worker");
-const bundleDir = mkdtempSync(join(tmpdir(), "talorys-agent-"));
+const bundleDir = mkdtempSync(join(tmpdir(), "emo-agent-"));
 run(process.execPath, [join(root, "node_modules/wrangler/bin/wrangler.js"), "deploy", "--dry-run", "--outdir", bundleDir, "--config", "wrangler.jsonc"], join(root, "apps/agent"));
 
 rmSync(out, { recursive: true, force: true });
@@ -45,7 +45,7 @@ cpSync(join(root, "apps/web/functions/api/[[path]].ts"), join(out, "web/function
 writeFileSync(join(out, "version.json"), `${JSON.stringify({ version: pkg.version, built_at: new Date().toISOString() }, null, 2)}\n`);
 
 // Safety net: no secrets or local dev values may ever ship in the package.
-const forbidden = [/pbkdf2-sha256\$\d+\$/, /TALORYS_ENV\s*=\s*development/, /talorys-dev-password/];
+const forbidden = [/pbkdf2-sha256\$\d+\$/, /EMO_ENV\s*=\s*development/, /emo-dev-password/];
 function scan(dir) {
   for (const entry of readdirSync(dir)) {
     const p = join(dir, entry);

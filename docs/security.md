@@ -1,6 +1,6 @@
 # Security
 
-Talorys is single-user. The threat model assumes the internet can reach your
+EMO is single-user. The threat model assumes the internet can reach your
 `pages.dev` URL; only the owner should be able to read or change data.
 
 ## Authentication
@@ -15,7 +15,7 @@ Talorys is single-user. The threat model assumes the internet can reach your
   the password as not configured and refuses every login.
 - A 256-bit `SESSION_SECRET` is generated locally and stored as a Worker secret.
 - Sessions are random 256-bit tokens in an `HttpOnly; Secure; SameSite=Strict;
-  Path=/` cookie named `__Host-talorys_session`. The database stores only
+  Path=/` cookie named `__Host-emo_session`. The database stores only
   `HMAC(SESSION_SECRET, token)`; a storage leak cannot be replayed.
 - Sessions expire after 30 days, or 14 days of inactivity. Logout and
   "sign out other sessions" revoke server-side. At most 20 sessions are kept.
@@ -23,6 +23,25 @@ Talorys is single-user. The threat model assumes the internet can reach your
 - `reset-password` (CLI) replaces the secret; the Durable Object detects the
   changed fingerprint, discards any UI-set password and revokes every session.
 - There is no signup, setup or ownership-claim endpoint.
+
+## AI provider keys
+
+- Keys entered in Settings → AI are encrypted with AES-256-GCM before storage.
+  The encryption key is derived from `SESSION_SECRET` via HKDF-SHA256 with a
+  fixed, context-specific info string, so the database alone does not reveal a
+  key and the same secret cannot be reused directly as a cipher key.
+- The key is write-only at the API boundary: `PATCH /api/settings` accepts
+  `aiApiKey`, and no endpoint ever returns it. `GET /api/settings` reports only
+  `aiKeySet`.
+- Keys are never included in backups. `aiProvider` and `aiBaseUrl` are also
+  ignored on import, so a restored backup cannot silently route prompts to a
+  different endpoint.
+- Rotating `SESSION_SECRET` invalidates stored provider keys; they must be
+  entered again. Removing a key is an explicit action and takes effect on the
+  next provider construction.
+- The selected provider receives the prompt and the memories included with it.
+  Review that provider's privacy and retention terms before switching away from
+  Workers AI.
 
 ## Brute force
 
@@ -36,7 +55,7 @@ Responses include `Retry-After`. Password changes are subject to the same limite
 
 ## CSRF
 
-Every non-GET request must carry `x-talorys-request: 1` (cross-site forms cannot
+Every non-GET request must carry `x-emo-request: 1` (cross-site forms cannot
 set custom headers, and no CORS is ever granted), an `Origin` equal to the
 request origin (or a same-origin `Sec-Fetch-Site`), and the cookie is
 `SameSite=Strict`.
@@ -110,13 +129,13 @@ the Worker for every route except `GET /api/health`, `POST /api/auth/login` and
 
 ## Backups
 
-A backup file is untrusted input; importing one cannot change what Talorys
+A backup file is untrusted input; importing one cannot change what EMO
 does on its own:
 
 - New automations arrive paused, and existing ones are never rewritten or
   re-enabled (a backup may only pause them).
-- The model, limits, demo mode, auto-memory and memory history settings are
-  not imported.
+- The model, AI provider, base URL, limits, demo mode, auto-memory and memory
+  history settings are not imported. Provider API keys are never exported.
 - Conversation summaries are dropped; they feed the system prompt but are
   invisible in the UI. They are regenerated from the visible messages.
 - Imported messages are marked as imported. Retry refuses them, and recorded
@@ -127,13 +146,13 @@ does on its own:
 
 - Commands are spawned with argument arrays (no shell).
 - Secrets go to Wrangler via stdin only.
-- `talorys.json` is checked to contain no secret-like values before writing.
+- `emo.json` is checked to contain no secret-like values before writing.
 - Error output is sanitized of token-like strings.
 
 ## Update check
 
 Once a day, when Settings → About is opened, the Worker fetches
-`https://registry.npmjs.org/create-talorys/latest` to see if a newer version
+`https://registry.npmjs.org/create-emo/latest` to see if a newer version
 exists. The request carries no user data; npm only sees the Worker's IP. The
 browser never contacts npm (`connect-src 'self'` is unchanged). Turn it off
 under Settings → About → Check for updates.

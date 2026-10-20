@@ -14,6 +14,7 @@ import { MemoryHistoryService, type MemoryHistoryHooks } from "../memory";
 import { PushSubscriptionRepository } from "../push/repository";
 import { PushService } from "../push/service";
 import { RemoteTokenService } from "../remote/tokens";
+import { AiKeyStore } from "./ai-keys";
 
 /** All data services for the single owner, bound to one Durable Object's storage. */
 export interface Services {
@@ -27,6 +28,7 @@ export interface Services {
   notifications: NotificationRepository;
   pendingActions: PendingActionRepository;
   settings: SettingsService;
+  aiKeys: AiKeyStore;
   usage: UsageService;
   activity: ActivityLog;
   auth: AuthService;
@@ -46,8 +48,8 @@ export function createServices(
 ): Services {
   const db = new Database(storage);
   const settings = new SettingsService(db, {
-    ...(env.TALORYS_DEFAULT_TIMEZONE ? { timezone: env.TALORYS_DEFAULT_TIMEZONE } : {}),
-    ...(env.TALORYS_AGENT_NAME ? { agentName: env.TALORYS_AGENT_NAME } : {}),
+    ...(env.EMO_DEFAULT_TIMEZONE ? { timezone: env.EMO_DEFAULT_TIMEZONE } : {}),
+    ...(env.EMO_AGENT_NAME ? { agentName: env.EMO_AGENT_NAME } : {}),
   });
   const automationsRepo = new AutomationRepository(db);
   const push = new PushService(new PushSubscriptionRepository(db), env, background);
@@ -66,6 +68,7 @@ export function createServices(
     notifications,
     pendingActions: new PendingActionRepository(db),
     settings,
+    aiKeys: new AiKeyStore(db, env.SESSION_SECRET),
     usage,
     activity,
     auth: new AuthService(db, settings, {

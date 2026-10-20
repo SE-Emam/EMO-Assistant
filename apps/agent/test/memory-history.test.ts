@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { runInDurableObject } from "cloudflare:test";
 import { getAgentByName } from "agents";
 import { describe, expect, it } from "vitest";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import { AgentRunner } from "../src/agent/runner";
 import type { AgentEvent, AIProvider, GenerateRequest, ToolRequest } from "../src/ai/provider";
 import { Database } from "../src/db/database";
@@ -19,7 +19,7 @@ import { exportData, importData } from "../src/services/backup";
 import { UsageService } from "../src/services/usage";
 import { BASE, fakeAi, inAgent, loggedIn } from "./helpers";
 
-const ns = () => (env as unknown as { TalorysAgent: DurableObjectNamespace<TalorysAgent> }).TalorysAgent;
+const ns = () => (env as unknown as { EmoAgent: DurableObjectNamespace<EmoAgent> }).EmoAgent;
 
 /** A Clef-shaped response: one choice answer per older memory, in order. */
 function clefReply(...answers: [string, number][]) {
@@ -29,8 +29,8 @@ function clefReply(...answers: [string, number][]) {
 /** Each test gets its own Durable Object (and so its own empty database). */
 function freshAgent() {
   const name = `memory-history-${crypto.randomUUID()}`;
-  return async <R>(fn: (agent: TalorysAgent, state: DurableObjectState) => R | Promise<R>): Promise<R> =>
-    runInDurableObject(await getAgentByName(ns(), name), async (agent: TalorysAgent, state: DurableObjectState) => fn(agent, state));
+  return async <R>(fn: (agent: EmoAgent, state: DurableObjectState) => R | Promise<R>): Promise<R> =>
+    runInDurableObject(await getAgentByName(ns(), name), async (agent: EmoAgent, state: DurableObjectState) => fn(agent, state));
 }
 
 class RecordingProvider implements AIProvider {
@@ -52,7 +52,7 @@ class RecordingProvider implements AIProvider {
 }
 
 /** One chat turn; with `semantic` the runner gets the semantic module's extensions, as in production. */
-async function chatOnce(agent: TalorysAgent, message: string, semantic = false) {
+async function chatOnce(agent: EmoAgent, message: string, semantic = false) {
   const provider = new RecordingProvider();
   const ext = semantic ? semanticExtensions(agent.services, env as unknown as Env) : undefined;
   const runner = new AgentRunner(agent.services, provider, ext);
@@ -61,7 +61,7 @@ async function chatOnce(agent: TalorysAgent, message: string, semantic = false) 
   return { system: provider.systems[0] ?? "", done: events.at(-1) as { type: string; message: { status: string } } };
 }
 
-function enableSemantic(agent: TalorysAgent) {
+function enableSemantic(agent: EmoAgent) {
   const s = agent.services;
   writeSemanticConfig(s.settings, { enabled: true, maxEmbeddingsPerDay: 10_000 }, s.db);
   invalidateSemanticCache(s);
@@ -460,7 +460,7 @@ describe("backup and restore", () => {
       const s = agent.services;
       const t = "2026-01-01T00:00:00.000Z";
       const v1 = {
-        format: "talorys-backup",
+        format: "emo-backup",
         version: 1,
         exported_at: t,
         data: { memories: [{ id: "old-1", content: "Pre-history fact about chess", category: "fact", created_at: t, updated_at: t }] },
@@ -537,13 +537,13 @@ describe("PR #22 review", () => {
   const LONDON = "I live in London";
   const MOVED = "I moved to Paris";
 
-  function aiOn(agent: TalorysAgent) {
+  function aiOn(agent: EmoAgent) {
     agent.services.settings.update({ memoryHistory: { aiConflictCheck: true } });
     return agent.services;
   }
 
   it("#2 a rule-confident supersede becomes a review when Clef cannot answer", async () => {
-    const cases: [string, (s: TalorysAgent["services"]) => void][] = [
+    const cases: [string, (s: EmoAgent["services"]) => void][] = [
       ["no Clef", (s) => (s.memoryHistory.hooks.clef = () => null)],
       [
         "budget spent",
@@ -690,7 +690,7 @@ describe("PR #22 review", () => {
         const request = new Request(`${BASE}/api/memories`, {
           method: "POST",
           signal: controller.signal,
-          headers: { "cf-connecting-ip": c.ip, "x-talorys-request": "1", origin: BASE, "content-type": "application/json", cookie: c.cookie! },
+          headers: { "cf-connecting-ip": c.ip, "x-emo-request": "1", origin: BASE, "content-type": "application/json", cookie: c.cookie! },
           body: JSON.stringify({ content: `${MOVED} ${tag}` }),
         });
         const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 1000));
@@ -709,7 +709,7 @@ describe("PR #22 review", () => {
   });
 
   it("#6 nothing is embedded when Clef cannot run", async () => {
-    const cases: ((s: TalorysAgent["services"]) => void)[] = [
+    const cases: ((s: EmoAgent["services"]) => void)[] = [
       (s) => (s.memoryHistory.hooks.clef = () => null),
       (s) => {
         s.memoryHistory.hooks.clef = () => async () => clefReply(["unrelated", 0.9]);
@@ -825,13 +825,13 @@ describe("PR #22 hardening", () => {
   const OLDER = "Alpha kayaks on weekends";
   const NEWER = "Beta gardens every evening";
 
-  function aiOn(agent: TalorysAgent) {
+  function aiOn(agent: EmoAgent) {
     agent.services.settings.update({ memoryHistory: { aiConflictCheck: true } });
     return agent.services;
   }
 
   /** Saves OLDER then NEWER, with OLDER offered to Clef only as a close semantic neighbor. */
-  const semanticOnly = (clef: TalorysAgent["services"]["memoryHistory"]["hooks"]["clef"]) =>
+  const semanticOnly = (clef: EmoAgent["services"]["memoryHistory"]["hooks"]["clef"]) =>
     freshAgent()(async (agent) => {
       const s = aiOn(agent);
       s.memoryHistory.hooks.neighbors = async () => [];

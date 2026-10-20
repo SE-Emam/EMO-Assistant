@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const PASSWORD = process.env.TALORYS_DEV_PASSWORD || "talorys-dev-password";
-const CSRF = { "x-talorys-request": "1" };
+const PASSWORD = process.env.EMO_DEV_PASSWORD || "emo-dev-password";
+const CSRF = { "x-emo-request": "1" };
 
 async function login(page: Page) {
   await page.goto("/");

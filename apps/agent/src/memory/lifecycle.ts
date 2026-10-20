@@ -1,4 +1,4 @@
-import type { Memory, MemoryHistory, MemoryReviewAction, MemoryStatus } from "@talorys/shared";
+import type { Memory, MemoryHistory, MemoryReviewAction, MemoryStatus } from "@emo/shared";
 import type { Database } from "../db/database";
 import type { MemoryRepository } from "../db/repositories/memories";
 import { AppError, NotFoundError, ValidationError } from "../api/errors";

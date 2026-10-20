@@ -8,7 +8,7 @@ dist/
 coverage/
 test-results/
 playwright-report/
-packages/create-talorys/templates/
+packages/create-emo/templates/
 *.tgz
 .env
 .env.*

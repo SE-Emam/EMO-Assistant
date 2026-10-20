@@ -12,7 +12,7 @@ import { ALL_TOOLS, type ToolContext, type ToolDefinition } from "../src/tools";
 import type { ImmediateTool } from "../src/tools/registry";
 import { UsageService } from "../src/services/usage";
 import type { Services } from "../src/services/container";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 function reset(s: Services) {
   dropSemanticData(s.db);
@@ -23,7 +23,7 @@ function reset(s: Services) {
 }
 
 /** A fresh turn: seeded items are indexed first, so only query embeddings move the counters below. */
-async function turn(a: TalorysAgent) {
+async function turn(a: EmoAgent) {
   const s = a.services;
   reset(s);
   ensureSemanticSchema(s.db);

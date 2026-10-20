@@ -1,4 +1,4 @@
-import type { Memory, MemoryCategory } from "@talorys/shared";
+import type { Memory, MemoryCategory } from "@emo/shared";
 import { describe, expect, it, vi } from "vitest";
 import { inAgent } from "./helpers";
 import { invalidateSemanticCache, semanticExtensions } from "../src/semantic";
@@ -50,7 +50,7 @@ import { UsageService } from "../src/services/usage";
 import { semanticTools } from "../src/semantic/tools";
 import { type ToolContext, ALL_TOOLS } from "../src/tools";
 import type { ImmediateTool } from "../src/tools/registry";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import { env } from "cloudflare:workers";
 import golden from "./fixtures/recall-golden.json";
 import { AgentRunner } from "../src/agent/runner";
@@ -66,7 +66,7 @@ type ContextPatch = Partial<Omit<SemanticConfig, "vectorFloor">> & { vectorFloor
  * Clears memories and semantic state and returns an enabled context with a spied mock embedder.
  * A patched floor without `backstop` sets it to `absolute`, so cases about other behavior get no top-k fallback.
  */
-function context(a: TalorysAgent, patch: ContextPatch = {}, embedder: Embedder | null = new MockEmbedder()) {
+function context(a: EmoAgent, patch: ContextPatch = {}, embedder: Embedder | null = new MockEmbedder()) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);
@@ -95,7 +95,7 @@ function memory(id: string, updated_at: string, created_at = updated_at, content
   return { id, content, category: "fact", source: "manual", status: "active", superseded_by: null, valid_from: null, valid_until: null, created_at, updated_at };
 }
 
-const setUpdated = (a: TalorysAgent, id: string, iso: string) =>
+const setUpdated = (a: EmoAgent, id: string, iso: string) =>
   a.services.db.run(`UPDATE tal_memories SET updated_at = ?, created_at = ? WHERE id = ?`, iso, iso, id);
 
 /** Pads a short coordinate list to a full embedding. */
@@ -133,7 +133,7 @@ function stubEmbedder(model: string, query: Float32Array): Embedder {
 }
 
 /** Creates a memory saved at `iso` with a current stored vector, so the indexer leaves it alone. */
-async function place(a: TalorysAgent, model: string, content: string, iso: string, vector: Float32Array): Promise<Memory> {
+async function place(a: EmoAgent, model: string, content: string, iso: string, vector: Float32Array): Promise<Memory> {
   const s = a.services;
   const m = s.memories.create({ content, category: "fact" });
   setUpdated(a, m.id, iso);
@@ -518,7 +518,7 @@ describe("newer near-duplicate pull-in", () => {
 describe("top-k vector fallback", () => {
   const M3 = "@cf/baai/bge-m3";
   const TENNIS = "Can I play tennis like a regular person?";
-  const toolCtx = (a: TalorysAgent): ToolContext => ({ services: a.services, timezone: "UTC", mode: "chat" });
+  const toolCtx = (a: EmoAgent): ToolContext => ({ services: a.services, timezone: "UTC", mode: "chat" });
   const vectorIds = (hits: { memory: Memory; cosine: number | null }[]) => hits.filter((h) => h.cosine !== null).map((h) => h.memory.id);
 
   it("defaults to a 0.40 backstop and fills to four", () => {
@@ -693,7 +693,7 @@ describe("selectSemanticMemories", () => {
   });
 });
 
-// The test pool runs with TALORYS_ENV=development and TALORYS_MOCK_AI=1, so recall embeds with the mock.
+// The test pool runs with EMO_ENV=development and EMO_MOCK_AI=1, so recall embeds with the mock.
 const workerEnv = env as unknown as Env;
 
 interface GoldenCase {
@@ -726,7 +726,7 @@ function seed(s: Services, memories: GoldenCase["memories"], enabled: boolean) {
 
 /** The memory lines `buildSystemPrompt` renders for `memories`, as `- [category] content`. */
 function memoryBlock(memories: Memory[]): string[] {
-  const prompt = buildSystemPrompt({ agentName: "Talorys", timezone: "UTC", now: new Date(0), autoMemory: false, memories });
+  const prompt = buildSystemPrompt({ timezone: "UTC", now: new Date(0), autoMemory: false, memories });
   return prompt.split("\n").filter((l) => l.startsWith("- ["));
 }
 
@@ -895,7 +895,7 @@ describe("semanticNeighbors", () => {
 describe("PR #22 review", () => {
   const options = () => ({ minCosine: -1, limit: 100, exclude: new Set<string>() });
 
-  function enabled(a: TalorysAgent) {
+  function enabled(a: EmoAgent) {
     const s = a.services;
     dropSemanticData(s.db);
     deleteSemanticConfig(s.settings);

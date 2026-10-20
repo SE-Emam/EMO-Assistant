@@ -227,7 +227,7 @@ export const WriterEditor = forwardRef<WriterHandle, Props>(function WriterEdito
   let fence = false;
   return (
     <div className={cn("writer relative grid", focusMode && "writer-focus")}>
-      <div aria-hidden className="writer-layer pointer-events-none col-start-1 row-start-1">
+      <div aria-hidden dir="auto" className="writer-layer pointer-events-none col-start-1 row-start-1">
         {lines.map((line, i) => {
           const fenceLine = /^\s*(```|~~~)/.test(line);
           const node = highlightLine(line, fence, `l${i}`);
@@ -245,6 +245,7 @@ export const WriterEditor = forwardRef<WriterHandle, Props>(function WriterEdito
       <textarea
         ref={ta}
         {...rest}
+        dir="auto"
         value={value}
         spellCheck
         onChange={(e) => {

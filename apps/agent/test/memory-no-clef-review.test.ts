@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { runInDurableObject } from "cloudflare:test";
 import { getAgentByName } from "agents";
 import { describe, expect, it } from "vitest";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 import { invalidateSemanticCache } from "../src/semantic";
 import { readSemanticConfig, writeSemanticConfig } from "../src/semantic/config";
 import { embeddingsToday } from "../src/semantic/embeddings";
@@ -10,7 +10,7 @@ import { createSemanticContext } from "../src/semantic/recall";
 import { UsageService } from "../src/services/usage";
 import type { Env } from "../src/env";
 
-const ns = () => (env as unknown as { TalorysAgent: DurableObjectNamespace<TalorysAgent> }).TalorysAgent;
+const ns = () => (env as unknown as { EmoAgent: DurableObjectNamespace<EmoAgent> }).EmoAgent;
 
 /** A Clef-shaped response: one choice answer per older memory, in order. */
 function clefReply(...answers: [string, number][]) {
@@ -20,18 +20,18 @@ function clefReply(...answers: [string, number][]) {
 /** Each test gets its own Durable Object (and so its own empty database). */
 function freshAgent() {
   const name = `memory-no-clef-${crypto.randomUUID()}`;
-  return async <R>(fn: (agent: TalorysAgent, state: DurableObjectState) => R | Promise<R>): Promise<R> =>
-    runInDurableObject(await getAgentByName(ns(), name), async (agent: TalorysAgent, state: DurableObjectState) => fn(agent, state));
+  return async <R>(fn: (agent: EmoAgent, state: DurableObjectState) => R | Promise<R>): Promise<R> =>
+    runInDurableObject(await getAgentByName(ns(), name), async (agent: EmoAgent, state: DurableObjectState) => fn(agent, state));
 }
 
-function enableSemantic(agent: TalorysAgent) {
+function enableSemantic(agent: EmoAgent) {
   const s = agent.services;
   writeSemanticConfig(s.settings, { enabled: true, maxEmbeddingsPerDay: 10_000 }, s.db);
   invalidateSemanticCache(s);
   return createSemanticContext(s, env as unknown as Env, readSemanticConfig(s.settings, s.db)!);
 }
 
-function aiOn(agent: TalorysAgent) {
+function aiOn(agent: EmoAgent) {
   agent.services.settings.update({ memoryHistory: { aiConflictCheck: true } });
   return agent.services;
 }

@@ -1,4 +1,4 @@
-import { CSRF_HEADER, DEV_SESSION_COOKIE, SESSION_COOKIE } from "@talorys/shared";
+import { CSRF_HEADER, DEV_SESSION_COOKIE, SESSION_COOKIE } from "@emo/shared";
 import type { Context, MiddlewareHandler } from "hono";
 import type { z } from "zod";
 import type { AppEnv } from "./app";
@@ -17,13 +17,13 @@ export const securityHeaders: MiddlewareHandler<AppEnv> = async (c, next) => {
 };
 
 function isDevelopment(c: Context<AppEnv>): boolean {
-  return c.env.env.TALORYS_ENV === "development";
+  return c.env.env.EMO_ENV === "development";
 }
 
 function allowedOrigins(c: Context<AppEnv>): Set<string> {
   const origins = new Set([new URL(c.req.url).origin]);
   if (isDevelopment(c)) {
-    for (const o of (c.env.env.TALORYS_DEV_ORIGINS ?? "").split(",")) if (o.trim()) origins.add(o.trim());
+    for (const o of (c.env.env.EMO_DEV_ORIGINS ?? "").split(",")) if (o.trim()) origins.add(o.trim());
   }
   return origins;
 }

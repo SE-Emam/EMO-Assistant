@@ -33,7 +33,7 @@ export function cachedSemanticConfig(services: Services): SemanticConfig | null 
 }
 
 /** Installer-written Worker var; "on" seeds the feature once on a fresh install. */
-export const SEMANTIC_DEFAULT_VAR = "TALORYS_SEMANTIC_DEFAULT";
+export const SEMANTIC_DEFAULT_VAR = "EMO_SEMANTIC_DEFAULT";
 
 /**
  * Applies the installer's opt-in once: when the var is "on" and the config key is

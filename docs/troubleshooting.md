@@ -3,7 +3,7 @@
 Start with:
 
 ```bash
-npx create-talorys@latest doctor
+npx create-emo@latest doctor
 ```
 
 ## Installation
@@ -21,24 +21,24 @@ Pages in the chosen account (see [deployment.md](deployment.md#permissions)).
 can take a few minutes to get DNS and certificates. Re-run the same command;
 it resumes without duplicating anything.
 
-**"…already exists and is not a Talorys installation."** Choose another
+**"…already exists and is not a EMO installation."** Choose another
 directory with `--dir`. The installer never overwrites unrelated folders.
 
 **"SQLite-backed Durable Objects are not available."** Check the account's
 Workers settings; SQLite Durable Objects are included on the Free plan.
 
-## Using Talorys
+## Using EMO
 
 **"Your Cloudflare account has used its Workers AI allocation for today."**
 The daily free Neuron allocation is exhausted. Chat resumes after the reset;
 tasks, notes, memories and reminders keep working. Exact usage is in the
 Cloudflare dashboard (Workers AI).
 
-**"Talorys reached its daily limit of N AI requests."** That's Talorys' own
+**"EMO reached its daily limit of N AI requests."** That's EMO' own
 guardrail; raise it in Settings → AI.
 
 **"Too many failed attempts."** Wait 15 minutes, or reset the password with
-`npx create-talorys@latest reset-password`.
+`npx create-emo@latest reset-password`.
 
 **Reminders fire at the wrong time.** Check Settings → General → Timezone.
 Changing it re-schedules all automations.

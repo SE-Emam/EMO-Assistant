@@ -1,4 +1,4 @@
-import type { Memory } from "@talorys/shared";
+import type { Memory } from "@emo/shared";
 import { z } from "zod";
 import { estimateTokens, modelUsage, tokenCount, tokens as tokenUsage, type Usage } from "../ai/provider";
 

@@ -7,10 +7,10 @@ import type { IndexerContext } from "../src/semantic/indexer";
 import { dropSemanticData } from "../src/semantic/migrations";
 import { changedItemRows, pendingItems, runItemPass } from "../src/semantic/itemIndex";
 import { itemSourceStamp } from "../src/semantic/itemText";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
 /** Clears items and semantic state, seeds `n` tasks and indexes them all. */
-async function indexedTasks(a: TalorysAgent, n: number) {
+async function indexedTasks(a: EmoAgent, n: number) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);
@@ -27,9 +27,9 @@ async function indexedTasks(a: TalorysAgent, n: number) {
 }
 
 /** Moves a task's updated_at forward without changing its text. */
-const bump = (a: TalorysAgent, id: string, at: string) => a.services.db.run(`UPDATE tal_tasks SET updated_at = ? WHERE id = ?`, at, id);
+const bump = (a: EmoAgent, id: string, at: string) => a.services.db.run(`UPDATE tal_tasks SET updated_at = ? WHERE id = ?`, at, id);
 
-const stamp = (a: TalorysAgent, id: string) =>
+const stamp = (a: EmoAgent, id: string) =>
   a.services.db.one<{ s: string }>(`SELECT source_updated_at AS s FROM tal_semantic_item_vectors WHERE item_type = 'task' AND item_id = ?`, id)?.s;
 
 describe("item change check", () => {

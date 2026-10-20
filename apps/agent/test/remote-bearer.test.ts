@@ -1,4 +1,4 @@
-import type { RemoteScope } from "@talorys/shared";
+import type { RemoteScope } from "@emo/shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { isRemoteAllowed } from "../src/remote/allowlist";
 import { bearer, client, inAgent, loggedIn } from "./helpers";
@@ -128,7 +128,7 @@ describe("remote bearer access", () => {
 
     // A session request without the CSRF header stays 403, and adding a bogus Authorization
     // header turns it into 401 rather than letting it through.
-    const noCsrf = { "x-talorys-request": "", origin: "" };
+    const noCsrf = { "x-emo-request": "", origin: "" };
     expect((await c.call("/api/tasks", { method: "POST", body: { title: "x" }, headers: noCsrf })).status).toBe(403);
     const bogus = await c.call("/api/tasks", { method: "POST", body: { title: "x" }, headers: { ...noCsrf, authorization: "Bearer tal_bogus" } });
     expect(bogus.status).toBe(401);

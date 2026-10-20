@@ -1,4 +1,4 @@
-import { type ChatStreamEvent, chatRequestSchema, conversationCreateSchema, conversationUpdateSchema } from "@talorys/shared";
+import { type ChatStreamEvent, chatRequestSchema, conversationCreateSchema, conversationUpdateSchema } from "@emo/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../app";
@@ -83,7 +83,7 @@ chatRoutes.post("/chat", async (c) => {
     let conversationId: string | undefined = input.conversation_id;
     try {
       await writer.write(encoder.encode(`: stream open\n\n`));
-      for await (const event of agent.runner().chat({
+      for await (const event of (await agent.runner()).chat({
         conversationId: input.conversation_id,
         message: input.message,
         retry: input.retry,

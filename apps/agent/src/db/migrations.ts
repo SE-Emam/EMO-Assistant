@@ -1,7 +1,7 @@
 import type { Database } from "./database";
 
 /**
- * Versioned, append-only schema migrations for Talorys data.
+ * Versioned, append-only schema migrations for EMO data.
  *
  * Rules:
  *  - Never edit or reorder an existing migration; add a new one.

@@ -1,4 +1,4 @@
-import { pushSubscribeSchema, pushUnsubscribeSchema } from "@talorys/shared";
+import { pushSubscribeSchema, pushUnsubscribeSchema } from "@emo/shared";
 import { Hono } from "hono";
 import type { AppEnv } from "../api/app";
 import { AppError, NotFoundError, ValidationError } from "../api/errors";

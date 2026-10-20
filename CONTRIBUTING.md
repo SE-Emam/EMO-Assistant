@@ -1,14 +1,14 @@
-# Contributing to Talorys
+# Contributing to EMO
 
 Thanks for your interest! Bug reports, docs fixes and focused pull requests
 are all welcome.
 
 ## Principles
 
-Talorys is a **single-user, self-hosted** agent that must stay within the
+EMO is a **single-user, self-hosted** agent that must stay within the
 Cloudflare free plan. Changes should keep these properties:
 
-- No telemetry, analytics or calls to services run by Talorys developers.
+- No telemetry, analytics or calls to services run by EMO developers.
 - No paid Cloudflare services enabled automatically, and no automatic switch
   to a paid model.
 - Secrets, API tokens and AI/storage bindings never reach browser code.
@@ -31,7 +31,7 @@ npm run dev
 
 This runs the agent Worker, the Pages Function proxy and the Vite UI locally
 with a mock AI provider; no Cloudflare account is needed. Open
-http://localhost:5173 and sign in with `talorys-dev-password`. See
+http://localhost:5173 and sign in with `emo-dev-password`. See
 [docs/development.md](docs/development.md) for details.
 
 ## Before opening a pull request
@@ -52,7 +52,7 @@ If you changed the installer, also run `npm run test:pack`.
 ## Reporting bugs
 
 Open an issue with steps to reproduce, expected and actual behaviour, and the
-output of `npx create-talorys@latest doctor` if it relates to a deployment.
+output of `npx create-emo@latest doctor` if it relates to a deployment.
 Remove any personal data first.
 
 **Security issues:** do not open a public issue. Follow [SECURITY.md](SECURITY.md).

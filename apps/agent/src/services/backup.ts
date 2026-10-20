@@ -4,10 +4,10 @@ import {
   type Backup,
   MEMORY_CATEGORIES,
   MEMORY_STATUSES,
-  TALORYS_VERSION,
+  EMO_VERSION,
   backupSchema,
   scheduleSpecSchema,
-} from "@talorys/shared";
+} from "@emo/shared";
 import type { Services } from "./container";
 import { ValidationError } from "../api/errors";
 import { decodeTools } from "../db/repositories/conversations";
@@ -16,7 +16,7 @@ import { decodeTools } from "../db/repositories/conversations";
  * Settings a backup may never change: they control cost and model behaviour, and a
  * backup file is untrusted input. The owner changes them in Settings instead.
  */
-export const IMPORT_IGNORED_SETTINGS = ["model", "limits", "demoMode", "autoMemory", "memoryHistory"] as const;
+export const IMPORT_IGNORED_SETTINGS = ["model", "aiProvider", "aiBaseUrl", "limits", "demoMode", "autoMemory", "memoryHistory"] as const;
 
 /** Builds a portable backup. Sessions, login attempts and credentials are never exported. */
 export function exportData(s: Services): Backup {
@@ -25,7 +25,7 @@ export function exportData(s: Services): Backup {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
     exported_at: new Date().toISOString(),
-    app_version: TALORYS_VERSION,
+    app_version: EMO_VERSION,
     data: {
       settings: s.settings.get(),
       conversations: db.all(`SELECT id, title, summary, summary_upto, created_at, updated_at FROM tal_conversations ORDER BY created_at`),
@@ -74,7 +74,7 @@ export async function importData(s: Services, raw: unknown): Promise<ImportSumma
   if (!parsed.success) throw ValidationError.fromZod(parsed.error);
   const backup = parsed.data;
   if (backup.version > BACKUP_VERSION) {
-    throw new ValidationError(`This backup was made by a newer Talorys (format v${backup.version}). Update Talorys first.`);
+    throw new ValidationError(`This backup was made by a newer EMO (format v${backup.version}). Update EMO first.`);
   }
   const previousTimezone = s.settings.get().timezone;
   const d = backup.data;

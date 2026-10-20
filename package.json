@@ -1,5 +1,5 @@
 {
-  "name": "talorys-monorepo",
+  "name": "emo-monorepo",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -7,23 +7,23 @@
     "packages/shared",
     "apps/agent",
     "apps/web",
-    "packages/create-talorys"
+    "packages/create-emo"
   ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "dev": "node scripts/dev-setup.mjs && node scripts/ensure-dist.mjs && concurrently -k -n agent,pages,web -c cyan,magenta,green \"npm:dev:agent\" \"npm:dev:pages\" \"npm:dev:web\"",
-    "dev:agent": "npm run dev -w @talorys/agent",
-    "dev:pages": "npm run dev:pages -w @talorys/web",
-    "dev:web": "npm run dev -w @talorys/web",
-    "build": "npm run build -w @talorys/web && npm run build -w @talorys/agent && npm run build -w create-talorys",
-    "typecheck": "tsc --noEmit -p packages/shared && npm run typecheck -w @talorys/agent && npm run typecheck -w @talorys/web && tsc --noEmit -p apps/web/functions && npm run typecheck -w create-talorys",
+    "dev:agent": "npm run dev -w @emo/agent",
+    "dev:pages": "npm run dev:pages -w @emo/web",
+    "dev:web": "npm run dev -w @emo/web",
+    "build": "npm run build -w @emo/web && npm run build -w @emo/agent && npm run build -w create-emo",
+    "typecheck": "tsc --noEmit -p packages/shared && npm run typecheck -w @emo/agent && npm run typecheck -w @emo/web && tsc --noEmit -p apps/web/functions && npm run typecheck -w create-emo",
     "lint": "biome lint .",
-    "test": "npm run test:shared && npm run test -w @talorys/agent && npm run test -w @talorys/web && npm run test -w create-talorys",
+    "test": "npm run test:shared && npm run test -w @emo/agent && npm run test -w @emo/web && npm run test -w create-emo",
     "test:shared": "vitest run --root packages/shared",
     "test:e2e": "playwright test",
-    "test:pack": "npm run test:pack -w create-talorys",
+    "test:pack": "npm run test:pack -w create-emo",
     "test:smoke": "node tests/smoke/real-deploy.mjs",
     "screenshots": "node scripts/screenshots.mjs"
   },

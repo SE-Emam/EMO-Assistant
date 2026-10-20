@@ -1,11 +1,12 @@
+import { locale, translate } from "./i18n";
+
 export function cn(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
-const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-
 export function relativeTime(iso: string | null | undefined): string {
   if (!iso) return "";
+  const rtf = new Intl.RelativeTimeFormat(locale(), { numeric: "auto" });
   const diff = Date.parse(iso) - Date.now();
   const abs = Math.abs(diff);
   const units: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -19,14 +20,14 @@ export function relativeTime(iso: string | null | undefined): string {
   for (const [unit, ms] of units) {
     if (abs >= ms) return rtf.format(Math.round(diff / ms), unit);
   }
-  return diff < 0 ? "just now" : "in a moment";
+  return diff < 0 ? translate("time.justNow") : translate("time.moment");
 }
 
 /** Formats an instant in the owner's timezone. */
 export function formatDateTime(iso: string | null | undefined, timeZone: string, opts: { dateOnly?: boolean } = {}): string {
   if (!iso) return "";
   const d = new Date(iso);
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale(), {
     timeZone,
     month: "short",
     day: "numeric",

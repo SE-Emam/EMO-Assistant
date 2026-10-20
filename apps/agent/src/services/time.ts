@@ -1,4 +1,4 @@
-import { getZonedParts, isValidCalendarDate, zonedTimeToUtc } from "@talorys/shared";
+import { getZonedParts, isValidCalendarDate, zonedTimeToUtc } from "@emo/shared";
 
 const LOCAL_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?$/;
 

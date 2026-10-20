@@ -2,7 +2,7 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CliError } from "./errors";
 
-export const MANIFEST_FILE = "talorys.json";
+export const MANIFEST_FILE = "emo.json";
 
 /**
  * Local installation manifest. Identifies the deployment across retries and

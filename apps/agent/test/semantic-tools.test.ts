@@ -9,9 +9,9 @@ import type { SemanticContext } from "../src/semantic/recall";
 import { SEARCH_DESCRIPTION, SEARCH_MEMORIES_DESCRIPTION, SEARCH_NOTES_DESCRIPTION, semanticTools } from "../src/semantic/tools";
 import { ALL_TOOLS, type ToolContext, type ToolDefinition } from "../src/tools";
 import type { ImmediateTool } from "../src/tools/registry";
-import type { TalorysAgent } from "../src/agent/talorys-agent";
+import type { EmoAgent } from "../src/agent/emo-agent";
 
-function setup(a: TalorysAgent) {
+function setup(a: EmoAgent) {
   const s = a.services;
   dropSemanticData(s.db);
   deleteSemanticConfig(s.settings);

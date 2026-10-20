@@ -1,13 +1,13 @@
 # Memory history
 
-Personal facts change. Memory history lets Talorys keep up:
+Personal facts change. Memory history lets EMO keep up:
 
 - When you say "I sold my Volkswagen and bought a Tesla", the Tesla becomes
   current and the Volkswagen is kept as a **past fact**. Ask "What car do I
   drive?" and you get the Tesla; ask "What did I drive before?" and the
   Volkswagen is still there.
 - When two memories *might* conflict but it isn't clear ("I live in Paris" after
-  "I live in London"), Talorys keeps both and asks you on the Memory page.
+  "I live in London"), EMO keeps both and asks you on the Memory page.
 - Nothing is silently overwritten, and nothing is deleted unless you ask.
 
 It works with keyword recall and with [semantic recall](semantic-recall.md),
@@ -17,7 +17,7 @@ uses no AI by default, and needs no extra Cloudflare service.
 
 Every memory has a status:
 
-- **Current** — what Talorys treats as true now.
+- **Current** — what EMO treats as true now.
 - **Historical** ("Past") — was true before; kept for questions about the past.
 - **Unsure** — flagged as possibly outdated.
 
@@ -25,8 +25,8 @@ Memories that existed before this feature are all current.
 
 ## How changes are detected
 
-When you save or edit a memory (on the Memory page, or when Talorys uses the
-`remember` / `update_memory` tools in chat), Talorys looks for related current
+When you save or edit a memory (on the Memory page, or when EMO uses the
+`remember` / `update_memory` tools in chat), EMO looks for related current
 memories — ones sharing words, or about the same single-valued topic (where you
 live, your car, your job, your diet, your relationship) — and decides:
 
@@ -38,18 +38,18 @@ live, your car, your job, your diet, your relationship) — and decides:
 | Same topic, unclear | "I live in Paris" vs. "I live in London" | **Both kept**; shown under *Needs review* |
 | Addition / unrelated | "I visited Paris" vs. "I live in London" | Nothing changes |
 
-Without the AI check, Talorys never retires a memory on its own. The wording
+Without the AI check, EMO never retires a memory on its own. The wording
 rules ("sold", "moved", "no longer", "replaced", …) only flag a likely
 replacement for your review; choose **Mark older as past** to keep the old one
 as history. Detection only runs when a memory is written, never on every chat
 message.
 
-When Talorys rewords a memory with `update_memory`, the new wording is saved as a
+When EMO rewords a memory with `update_memory`, the new wording is saved as a
 new memory and the old one becomes a past fact linked to it, the same as
 **Correct** on the Memory page, so the agent can never erase what you told it.
 
 Dates are only recorded when you state them ("since 2024", "in March 2025",
-"as of 2026-02-01"). Talorys never treats the save time as the date a fact
+"as of 2026-02-01"). EMO never treats the save time as the date a fact
 became true.
 
 ### Optional AI conflict check
@@ -132,7 +132,7 @@ meaning-based results: past facts are left out of present-tense questions.
 ## Backups
 
 - Backups include each memory's status, dates and "replaced by" link. The
-  backup format version is unchanged (v1); older Talorys versions ignore the new
+  backup format version is unchanged (v1); older EMO versions ignore the new
   fields.
 - Older backups import unchanged; their memories become current.
 - Imported links are checked: links to missing memories, self-links and cycles

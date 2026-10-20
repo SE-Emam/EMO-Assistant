@@ -1,4 +1,4 @@
-import { MAX_REMOTE_TOKENS, remoteStatusSchema, remoteTokenCreateSchema } from "@talorys/shared";
+import { MAX_REMOTE_TOKENS, remoteStatusSchema, remoteTokenCreateSchema } from "@emo/shared";
 import { Hono } from "hono";
 import type { AppEnv } from "../api/app";
 import { NotFoundError } from "../api/errors";

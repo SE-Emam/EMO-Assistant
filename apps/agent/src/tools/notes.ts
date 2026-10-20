@@ -1,4 +1,4 @@
-import { PROJECT_STATUSES } from "@talorys/shared";
+import { PROJECT_STATUSES } from "@emo/shared";
 import { z } from "zod";
 import { defineTool, quoteTitle, type ToolContext, ToolError } from "./registry";
 

@@ -1,12 +1,22 @@
 # Changelog
 
-All notable changes to Talorys are listed here. Versions match the `create-talorys` package.
+All notable changes to EMO are listed here. Versions match the `create-emo` package.
+
+## Unreleased
+
+### Added
+
+- EMO is the name of the assistant everywhere: the installer is now `create-emo`, and the agent introduces itself as EMO, the private assistant of engineer Imam Abdulaziz
+- The agent answers in the language the owner writes in, Arabic or English
+- Arabic and English interfaces, with a language switch and right-to-left layout (see `docs/development.md`)
+- OpenAI-compatible AI providers: OpenAI, OpenRouter, Groq, NVIDIA NIM, OpenCode Zen, Google Gemini, Ollama and any custom endpoint, each with its own encrypted API key (see `docs/ai-providers.md`)
+- The new EMO logo, wordmark and app icon
 
 ## 0.1.7 — 2026-10-19
 
 ### Added
 
-- Personal access tokens, so external tools and other AI assistants can use your Talorys (#60)
+- Personal access tokens, so external tools and other AI assistants can use your EMO (#60)
 - Notifications are delivered as Web Push (#28)
 - Chat finds tasks, notes and automations by meaning, not only by exact words (#50, #53)
 - Automations can be edited after they are created (#52)

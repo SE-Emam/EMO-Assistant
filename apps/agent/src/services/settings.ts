@@ -1,13 +1,15 @@
-import { DEFAULT_LIMITS, DEFAULT_MODEL, DEFAULT_MEMORY_HISTORY, type Settings, settingsSchema, settingsUpdateSchema } from "@talorys/shared";
+import { DEFAULT_LIMITS, DEFAULT_MODEL, DEFAULT_MEMORY_HISTORY, type Settings, settingsSchema, settingsUpdateSchema } from "@emo/shared";
 import type { z } from "zod";
 import { type Database, now } from "../db/database";
 import { ValidationError } from "../api/errors";
 
 export const DEFAULT_SETTINGS: Settings = {
-  agentName: "Talorys",
+  agentName: "EMO",
   timezone: "UTC",
   theme: "system",
   model: DEFAULT_MODEL,
+  aiProvider: "workers-ai",
+  aiBaseUrl: "",
   temperature: 0.4,
   limits: { ...DEFAULT_LIMITS },
   autoMemory: true,
@@ -54,6 +56,9 @@ export class SettingsService {
     };
     const parsed = settingsSchema.safeParse(next);
     if (!parsed.success) throw ValidationError.fromZod(parsed.error);
+    if (parsed.data.aiProvider === "custom" && !parsed.data.aiBaseUrl) {
+      throw new ValidationError("A base URL is required for the custom OpenAI-compatible provider.");
+    }
     this.setJson(SETTINGS_KEY, parsed.data);
     return parsed.data;
   }

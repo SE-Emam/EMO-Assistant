@@ -6,7 +6,7 @@ import {
   hmacSha256Hex,
   randomToken,
   remoteTokenCreateSchema,
-} from "@talorys/shared";
+} from "@emo/shared";
 import type { z } from "zod";
 import { type Database, newId, now } from "../db/database";
 import { AppError, ValidationError } from "../api/errors";

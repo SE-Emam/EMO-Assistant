@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BACKUP_FORMAT, LIMIT_CEILINGS } from "./constants";
+import { AI_PROVIDER_IDS, BACKUP_FORMAT, LIMIT_CEILINGS } from "./constants";
 import { isValidTimeZone, scheduleSpecSchema } from "./recurrence";
 
 // ---------- Primitives ----------
@@ -319,14 +319,19 @@ export const settingsSchema = z.object({
   agentName: shortText(60),
   timezone: z.string().refine(isValidTimeZone, "Unknown IANA timezone"),
   theme: z.enum(["system", "light", "dark"]),
-  model: z.string().regex(/^@(cf|hf)\/[\w.\-/]+$/, "Must be a Workers AI model id"),
+  /** Model id for the selected provider (Workers AI ids start with @cf/). */
+  model: z.string().trim().min(1).max(200),
+  /** Which provider serves chat. Defaults to the Cloudflare binding. */
+  aiProvider: z.enum(AI_PROVIDER_IDS),
+  /** Override base URL. Required for the custom provider; empty means use the preset. */
+  aiBaseUrl: z.union([z.literal(""), z.string().trim().url().max(500)]),
   temperature: z.number().min(0).max(1.5),
   limits: limitsSchema,
   autoMemory: z.boolean(),
   /** Documented demo mode: uses the deterministic mock provider instead of Workers AI. */
   demoMode: z.boolean(),
   memoryHistory: memoryHistorySettingsSchema,
-  /** Check the npm registry once a day for a newer Talorys release. */
+  /** Check the npm registry once a day for a newer EMO release. */
   updateCheck: z.boolean(),
 });
 export type Settings = z.infer<typeof settingsSchema>;

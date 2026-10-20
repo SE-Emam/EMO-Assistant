@@ -1,4 +1,4 @@
-import { scheduleSpecSchema } from "@talorys/shared";
+import { scheduleSpecSchema } from "@emo/shared";
 import { z } from "zod";
 import { defineTool, quoteTitle, ToolError } from "./registry";
 import { clip } from "../services/text";

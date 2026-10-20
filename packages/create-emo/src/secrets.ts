@@ -1,6 +1,6 @@
 import { randomBytes, webcrypto } from "node:crypto";
-import { hashPassword } from "@talorys/shared/crypto";
-import { checkPasswordStrength } from "@talorys/shared/password-policy";
+import { hashPassword } from "@emo/shared/crypto";
+import { checkPasswordStrength } from "@emo/shared/password-policy";
 
 export const PASSWORD_SECRET = "OWNER_PASSWORD_HASH";
 export const SESSION_SECRET = "SESSION_SECRET";
